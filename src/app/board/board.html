@@ -22,12 +22,13 @@
       }
     </div>
   </div>
-  <svg class="canvas-layer"
+  <svg class="canvas-layer" 
        (pointerdown)="handlePointerDown($event)"
        (pointermove)="handlePointerMove($event)"
        (pointerup)="handlePointerUp($event)"
-       (pointercancel)="handlePointerUp($event)"
-       [style.touch-action]="'none'"
+       (pointerleave)="handlePointerUp($event)"
+       [style.touch-action]="currentMode() === 'draw' ? 'none' : 'auto'"
+       [style.cursor]="currentMode() === 'draw' ? 'crosshair' : 'default'"
        [style.pointer-events]="currentMode() === 'draw' ? 'auto' : 'none'">
     
     <!-- Render all other strokes -->

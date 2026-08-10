@@ -33,12 +33,6 @@
     </button>
     
     @if (role() === 'teacher') {
-      <!-- Subir HTML -->
-      <label class="tool-btn" title="Cargar HTML" style="cursor: pointer;">
-        <lucide-angular [img]="FileCode2" size="20" strokeWidth="2"></lucide-angular>
-        <input type="file" style="display: none" accept=".html" (change)="onHtmlSelected($event)" />
-      </label>
-
       <!-- Subir Imagen -->
       <label class="tool-btn" title="Añadir Imagen" style="cursor: pointer;">
         <lucide-angular [img]="Image" size="20" strokeWidth="2"></lucide-angular>

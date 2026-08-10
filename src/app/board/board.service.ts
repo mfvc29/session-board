@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, doc, docData, setDoc, updateDoc, deleteDoc, collection, collectionData, addDoc, writeBatch, query, getDocs } from '@angular/fire/firestore';
+import { Firestore, doc, docData, getDoc, setDoc, updateDoc, deleteDoc, collection, collectionData, addDoc, writeBatch, query, getDocs } from '@angular/fire/firestore';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
@@ -10,8 +10,19 @@ export interface StrokeData {
   path: string;
 }
 
+export interface Exercise {
+  id: string;
+  statement: string;
+  options?: {
+    a: string;
+    b: string;
+    c: string;
+    d: string;
+  };
+}
+
 export interface SessionData {
-  htmlContent?: string;
+  exercises?: Exercise[];
   images?: string[];
 }
 
@@ -21,49 +32,16 @@ export interface SessionData {
 export class BoardService {
   private firestore = inject(Firestore);
 
-  processHtmlTemplate(html: string): string {
-    try {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      const problems = doc.querySelectorAll('.problem-item');
-      
-      problems.forEach(p => {
-        const boardSpace = doc.createElement('div');
-        boardSpace.className = 'injected-board-space';
-        boardSpace.style.cssText = `
-          height: 600px;
-          margin-top: 20px;
-          margin-bottom: 40px;
-          background-color: #ffffff;
-          background-image: linear-gradient(#e0e0e0 1px, transparent 1px), linear-gradient(90deg, #e0e0e0 1px, transparent 1px);
-          background-size: 20px 20px;
-          border: 1px solid #ccc;
-          border-radius: 4px;
-          position: relative;
-          box-shadow: inset 0 0 10px rgba(0,0,0,0.02);
-        `;
-        p.appendChild(boardSpace);
-      });
-      
-      return doc.documentElement.outerHTML;
-    } catch (e) {
-      console.error('Error processing HTML template', e);
-      return html;
-    }
-  }
+  // Removed processHtmlTemplate
 
   generateSessionCode(): string {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
-  // Crea la sesión - guarda SOLO el HTML y las imágenes (NO los trazos)
-  async createSession(sessionId: string, htmlContent?: string): Promise<void> {
+  // Crea la sesión vacía
+  async createSession(sessionId: string): Promise<void> {
     const sessionRef = doc(this.firestore, `sessions/${sessionId}`);
-    const data: any = {};
-    if (htmlContent) {
-      data.htmlContent = htmlContent;
-    }
-    await setDoc(sessionRef, data);
+    await setDoc(sessionRef, { exercises: [], images: [] });
   }
 
   // Observa los metadatos de la sesión (HTML + imágenes)
@@ -97,9 +75,15 @@ export class BoardService {
     await batch.commit();
   }
 
-  async updateSessionHtml(sessionId: string, htmlContent: string): Promise<void> {
+  async addExercise(sessionId: string, exercise: Exercise): Promise<void> {
     const sessionRef = doc(this.firestore, `sessions/${sessionId}`);
-    await updateDoc(sessionRef, { htmlContent });
+    const snapshot = await getDoc(sessionRef);
+    if (snapshot.exists()) {
+      const data = snapshot.data();
+      const exercises = data?.['exercises'] || [];
+      exercises.push(exercise);
+      await updateDoc(sessionRef, { exercises });
+    }
   }
 
   async addImage(sessionId: string, base64Image: string): Promise<void> {

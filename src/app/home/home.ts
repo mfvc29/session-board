@@ -13,8 +13,6 @@ import { BoardService } from '../board/board.service';
 export class Home {
   joinCode = signal('');
   createCode = signal('');
-  fileName = signal('');
-  selectedHtmlContent = signal('');
   user = signal<any>(null);
   
   private auth = inject(Auth);
@@ -33,28 +31,12 @@ export class Home {
     await this.auth.signOut();
   }
 
-  onFileSelected(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      this.fileName.set(file.name);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        if (result) {
-          this.selectedHtmlContent.set(result);
-        }
-      };
-      reader.readAsText(file);
-    }
-  }
-
   async createSession() {
     if (this.createCode().length === 6) {
       const code = this.createCode();
-      const htmlContent = this.boardService.processHtmlTemplate(this.selectedHtmlContent());
       
       // Creamos la sesión en Firebase sin esperar (fire-and-forget) para evitar bloqueos de red
-      this.boardService.createSession(code, htmlContent).catch(e => console.error('Error al crear sesión:', e));
+      this.boardService.createSession(code).catch(e => console.error('Error al crear sesión:', e));
       
       this.router.navigate(['/board', code], { 
         queryParams: { role: 'teacher' }

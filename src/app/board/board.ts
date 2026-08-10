@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { BoardService, StrokeData } from './board.service';
 import { getStroke } from 'perfect-freehand';
 import { Toolbar } from '../toolbar/toolbar';
+import { LatexComponent } from '../components/latex/latex.component';
 import { Subscription } from 'rxjs';
 
 export function getSvgPathFromStroke(stroke: number[][]) {
@@ -22,7 +23,7 @@ export function getSvgPathFromStroke(stroke: number[][]) {
 
 @Component({
   selector: 'app-board',
-  imports: [Toolbar],
+  imports: [Toolbar, LatexComponent],
   templateUrl: './board.html',
   styleUrl: './board.scss',
 })
@@ -33,13 +34,13 @@ export class Board implements OnInit, OnDestroy {
   private router = inject(Router);
 
   sessionId = signal<string>('');
-  iframeSrc = signal<SafeResourceUrl | null>(null);
   currentMode = signal<'draw' | 'pointer'>('draw');
   currentColor = signal<string>('#ffffff');
   currentPoints = signal<number[][]>([]);
   allStrokes = signal<StrokeData[]>([]);
   images = signal<string[]>([]);
   role = signal<string>('student');
+  exercises = signal<any[]>([]);
 
   // Two separate subscriptions: one for metadata, one for strokes
   private sessionSub: Subscription | null = null;
@@ -59,26 +60,7 @@ export class Board implements OnInit, OnDestroy {
     });
   }
 
-  onIframeLoad(event: Event) {
-    const iframe = event.target as HTMLIFrameElement;
-    try {
-      if (iframe.contentWindow && iframe.contentWindow.document.body) {
-        const resizeIframe = () => {
-          const height = iframe.contentWindow!.document.documentElement.scrollHeight;
-          iframe.style.height = height + 'px';
-        };
-        
-        // Initial resize
-        resizeIframe();
-        
-        // Setup observer for dynamic content/images loading
-        const observer = new ResizeObserver(() => resizeIframe());
-        observer.observe(iframe.contentWindow.document.body);
-      }
-    } catch (e) {
-      console.warn('Cannot auto-resize iframe:', e);
-    }
-  }
+  // Iframe load removed
 
   ngOnDestroy() {
     this.sessionSub?.unsubscribe();
@@ -89,16 +71,14 @@ export class Board implements OnInit, OnDestroy {
     this.sessionSub?.unsubscribe();
     this.strokesSub?.unsubscribe();
 
-    // Subscribe to session metadata (HTML + images) — small doc, rarely changes
+    // Subscribe to session metadata (HTML + images + exercises)
     this.sessionSub = this.boardService.getSession(sessionId).subscribe(data => {
       if (data) {
         if (data.images) {
           this.images.set(Array.isArray(data.images) ? data.images : [data.images]);
         }
-        if (data.htmlContent && !this.iframeSrc()) {
-          const blob = new Blob([data.htmlContent], { type: 'text/html' });
-          const url = URL.createObjectURL(blob);
-          this.iframeSrc.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
+        if (data.exercises) {
+          this.exercises.set(data.exercises);
         }
       } else {
         this.resetSession();
@@ -114,7 +94,7 @@ export class Board implements OnInit, OnDestroy {
   resetSession() {
     this.allStrokes.set([]);
     this.images.set([]);
-    this.iframeSrc.set(null);
+    this.exercises.set([]);
   }
 
   currentPath = computed(() => {
@@ -181,23 +161,19 @@ export class Board implements OnInit, OnDestroy {
     }
   }
 
-  handleHtmlUpload(file: File) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      if (result) {
-        const processed = this.boardService.processHtmlTemplate(result);
-        const blob = new Blob([processed], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        this.iframeSrc.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
-        if (this.sessionId()) {
-          this.boardService.updateSessionHtml(this.sessionId(), processed);
-        }
-      }
+  addExercise(statement: string, a: string, b: string, c: string, d: string) {
+    if (!statement.trim()) return;
+    const exercise = {
+      id: Date.now().toString(),
+      statement,
+      options: { a, b, c, d }
     };
-    reader.readAsText(file);
+    if (this.sessionId()) {
+      this.boardService.addExercise(this.sessionId(), exercise);
+    }
   }
 
+  // HTML upload removed
   handleImageUpload(file: File) {
     const reader = new FileReader();
     reader.onload = (e) => {

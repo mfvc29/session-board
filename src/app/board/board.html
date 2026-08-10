@@ -1,24 +1,76 @@
 <div class="board-container">
   <!-- Session Info Overlay -->
   <div class="session-info glass-panel">
-    <div class="role-badge" [class.teacher]="role() === 'teacher'">{{ role() === 'teacher' ? 'Profesor' : 'Alumno' }}</div>
+    <div class="role-badge" [class.teacher]="role() === 'teacher'">{{ role() === 'teacher' ? 'Mentor' : 'Alumno' }}</div>
     <div class="session-code">Código: <strong>{{ sessionId() }}</strong></div>
   </div>
 
   <div class="content-layer">
-    @if (iframeSrc()) {
-      <iframe [src]="iframeSrc()" frameborder="0" width="100%" (load)="onIframeLoad($event)" style="min-height: 100vh; overflow: hidden; display: block;"></iframe>
-    } @else if (images().length === 0) {
-      <div class="empty-state">
-        <h2>Área de Trabajo</h2>
-        <p>{{ role() === 'teacher' ? 'Sube un archivo HTML desde la barra de herramientas o crea una nueva sesión con un archivo...' : 'Esperando a que el profesor cargue los ejercicios...' }}</p>
+    @if (role() === 'teacher') {
+      <div class="teacher-controls" style="padding: 20px; max-width: 800px; margin: 0 auto;">
+        <div class="glass-panel" style="padding: 20px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
+          <h3>Añadir Nuevo Problema</h3>
+          <textarea #statementInput placeholder="Escribe el problema usando texto y $LaTeX$..." style="min-height: 100px; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-family: inherit; resize: vertical;"></textarea>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <input #optA placeholder="Opción A (Opcional)" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;" />
+            <input #optB placeholder="Opción B (Opcional)" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;" />
+            <input #optC placeholder="Opción C (Opcional)" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;" />
+            <input #optD placeholder="Opción D (Opcional)" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;" />
+          </div>
+          
+          <button class="primary-btn" (click)="addExercise(statementInput.value, optA.value, optB.value, optC.value, optD.value); statementInput.value=''; optA.value=''; optB.value=''; optC.value=''; optD.value=''">
+            Añadir Ejercicio
+          </button>
+        </div>
       </div>
     }
 
+    <!-- Exercises List -->
+    <div class="exercises-container" style="max-width: 800px; margin: 0 auto; padding: 20px;">
+      @if (exercises().length === 0) {
+        <div class="empty-state">
+          <h2>Área de Trabajo</h2>
+          <p>{{ role() === 'teacher' ? 'Añade tu primer problema usando el formulario de arriba.' : 'Esperando a que el mentor cargue los ejercicios...' }}</p>
+        </div>
+      }
+
+      @for (ex of exercises(); track ex.id; let i = $index) {
+        <div class="exercise-item" style="margin-bottom: 60px;">
+          <h3 style="margin-bottom: 10px;">Problema {{ i + 1 }}</h3>
+          
+          <div class="statement" style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 15px;">
+            <app-latex [content]="ex.statement"></app-latex>
+          </div>
+          
+          @if (ex.options && (ex.options.a || ex.options.b || ex.options.c || ex.options.d)) {
+            <div class="options" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+              @if (ex.options.a) { <div><strong>A)</strong> <app-latex [content]="ex.options.a"></app-latex></div> }
+              @if (ex.options.b) { <div><strong>B)</strong> <app-latex [content]="ex.options.b"></app-latex></div> }
+              @if (ex.options.c) { <div><strong>C)</strong> <app-latex [content]="ex.options.c"></app-latex></div> }
+              @if (ex.options.d) { <div><strong>D)</strong> <app-latex [content]="ex.options.d"></app-latex></div> }
+            </div>
+          }
+          
+          <!-- Drawing Area for this exercise -->
+          <div class="board-space" style="
+            height: 400px;
+            width: 100%;
+            background-color: #ffffff;
+            background-image: linear-gradient(#e0e0e0 1px, transparent 1px), linear-gradient(90deg, #e0e0e0 1px, transparent 1px);
+            background-size: 20px 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.02);
+          "></div>
+        </div>
+      }
+    </div>
+
     <!-- Render Extra Images -->
-    <div class="extra-images-container">
+    <div class="extra-images-container" style="max-width: 800px; margin: 0 auto;">
       @for (img of images(); track $index) {
-        <img [src]="img" class="extra-image" />
+        <img [src]="img" class="extra-image" style="max-width: 100%; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" />
       }
     </div>
 
@@ -49,7 +101,6 @@
     [role]="role()"
     (colorChange)="changeColor($event)"
     (clear)="clearBoard()"
-    (uploadHtml)="handleHtmlUpload($event)"
     (uploadImage)="handleImageUpload($event)"
     (endSession)="handleEndSession()"
     (toggleMode)="handleModeToggle($event)">

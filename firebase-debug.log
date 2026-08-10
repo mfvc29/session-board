@@ -1,48 +1,31 @@
-[debug] [2026-08-10T01:34:19.540Z] ----------------------------------------------------------------------
-[debug] [2026-08-10T01:34:19.542Z] Command:       /usr/bin/node /home/mvargasch/.npm/_npx/7750544ccf494d8b/node_modules/.bin/firebase deploy --only hosting
-[debug] [2026-08-10T01:34:19.543Z] CLI Version:   15.26.0
-[debug] [2026-08-10T01:34:19.543Z] Platform:      linux
-[debug] [2026-08-10T01:34:19.543Z] Node Version:  v26.4.0
-[debug] [2026-08-10T01:34:19.543Z] Detected Agent: antigravity
-[debug] [2026-08-10T01:34:19.543Z] Time:          Sun Aug 09 2026 20:34:19 GMT-0500 (hora estándar de Perú)
-[debug] [2026-08-10T01:34:19.543Z] ----------------------------------------------------------------------
+[debug] [2026-08-10T01:45:49.939Z] ----------------------------------------------------------------------
+[debug] [2026-08-10T01:45:49.942Z] Command:       /usr/bin/node /home/mvargasch/.npm/_npx/7750544ccf494d8b/node_modules/.bin/firebase deploy --only hosting
+[debug] [2026-08-10T01:45:49.942Z] CLI Version:   15.26.0
+[debug] [2026-08-10T01:45:49.942Z] Platform:      linux
+[debug] [2026-08-10T01:45:49.943Z] Node Version:  v26.4.0
+[debug] [2026-08-10T01:45:49.943Z] Detected Agent: antigravity
+[debug] [2026-08-10T01:45:49.943Z] Time:          Sun Aug 09 2026 20:45:49 GMT-0500 (hora estándar de Perú)
+[debug] [2026-08-10T01:45:49.943Z] ----------------------------------------------------------------------
 [debug] 
-[debug] [2026-08-10T01:34:20.854Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-08-10T01:34:20.854Z] > authorizing via signed-in user (29.mfvc@gmail.com)
-[debug] [2026-08-10T01:34:20.855Z] [iam] checking project sessionboard-77a56 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
-[debug] [2026-08-10T01:34:20.875Z] Checked if tokens are valid: true, expires at: 1786328779895
-[debug] [2026-08-10T01:34:20.875Z] Checked if tokens are valid: true, expires at: 1786328779895
-[debug] [2026-08-10T01:34:20.877Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/sessionboard-77a56:testIamPermissions [none]
-[debug] [2026-08-10T01:34:20.877Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/sessionboard-77a56:testIamPermissions  x-goog-user-project=sessionboard-77a56
-[debug] [2026-08-10T01:34:20.877Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/sessionboard-77a56:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
-[debug] [2026-08-10T01:34:22.077Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/sessionboard-77a56:testIamPermissions 200
-[debug] [2026-08-10T01:34:22.077Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/sessionboard-77a56:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
-[debug] [2026-08-10T01:34:22.079Z] Checked if tokens are valid: true, expires at: 1786328779895
-[debug] [2026-08-10T01:34:22.080Z] Checked if tokens are valid: true, expires at: 1786328779895
-[debug] [2026-08-10T01:34:22.080Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/sessionboard-77a56 [none]
-[debug] [2026-08-10T01:34:22.536Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/sessionboard-77a56 200
-[debug] [2026-08-10T01:34:22.537Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/sessionboard-77a56 {"projectId":"sessionboard-77a56","projectNumber":"617930955204","displayName":"sessionboard","name":"projects/sessionboard-77a56","resources":{"hostingSite":"sessionboard-77a56"},"state":"ACTIVE","labels":{"firebase":"enabled"},"etag":"1_e2b45827-f819-449d-9c13-09522a729152"}
+[debug] [2026-08-10T01:45:51.418Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-08-10T01:45:51.419Z] > authorizing via signed-in user (29.mfvc@gmail.com)
+[debug] [2026-08-10T01:45:51.419Z] [iam] checking project sessionboard-77a56 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-08-10T01:45:51.437Z] Checked if tokens are valid: true, expires at: 1786328779895
+[debug] [2026-08-10T01:45:51.437Z] Checked if tokens are valid: true, expires at: 1786328779895
+[debug] [2026-08-10T01:45:51.439Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/sessionboard-77a56:testIamPermissions [none]
+[debug] [2026-08-10T01:45:51.439Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/sessionboard-77a56:testIamPermissions  x-goog-user-project=sessionboard-77a56
+[debug] [2026-08-10T01:45:51.439Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/sessionboard-77a56:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-08-10T01:45:52.567Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/sessionboard-77a56:testIamPermissions 200
+[debug] [2026-08-10T01:45:52.568Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/sessionboard-77a56:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-08-10T01:45:52.570Z] Checked if tokens are valid: true, expires at: 1786328779895
+[debug] [2026-08-10T01:45:52.570Z] Checked if tokens are valid: true, expires at: 1786328779895
+[debug] [2026-08-10T01:45:52.570Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/sessionboard-77a56 [none]
+[debug] [2026-08-10T01:45:53.170Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/sessionboard-77a56 200
+[debug] [2026-08-10T01:45:53.170Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/sessionboard-77a56 {"projectId":"sessionboard-77a56","projectNumber":"617930955204","displayName":"sessionboard","name":"projects/sessionboard-77a56","resources":{"hostingSite":"sessionboard-77a56"},"state":"ACTIVE","labels":{"firebase":"enabled"},"etag":"1_e2b45827-f819-449d-9c13-09522a729152"}
 [info] 
 [info] === Deploying to 'sessionboard-77a56'...
 [info] 
 [info] i  deploying hosting 
-[debug] [2026-08-10T01:34:22.543Z] Checked if tokens are valid: true, expires at: 1786328779895
-[debug] [2026-08-10T01:34:22.543Z] Checked if tokens are valid: true, expires at: 1786328779895
-[debug] [2026-08-10T01:34:22.543Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/sessionboard-77a56/sites/sessionboard-77a56 [none]
-[debug] [2026-08-10T01:34:24.067Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/sessionboard-77a56/sites/sessionboard-77a56 200
-[debug] [2026-08-10T01:34:24.067Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/sessionboard-77a56/sites/sessionboard-77a56 {"name":"projects/sessionboard-77a56/sites/sessionboard-77a56","defaultUrl":"https://sessionboard-77a56.web.app","type":"DEFAULT_SITE"}
-[debug] [2026-08-10T01:34:24.068Z] Checked if tokens are valid: true, expires at: 1786328779895
-[debug] [2026-08-10T01:34:24.068Z] Checked if tokens are valid: true, expires at: 1786328779895
-[debug] [2026-08-10T01:34:24.068Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/sessionboard-77a56/versions [none]
-[debug] [2026-08-10T01:34:24.068Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/sessionboard-77a56/versions {"status":"CREATED","labels":{"deployment-tool":"cli-firebase"}}
-[debug] [2026-08-10T01:34:24.937Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/sessionboard-77a56/versions 200
-[debug] [2026-08-10T01:34:24.937Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/sessionboard-77a56/versions {"name":"projects/617930955204/sites/sessionboard-77a56/versions/0fd2bd6230c1935b","status":"CREATED","config":{},"labels":{"deployment-tool":"cli-firebase"}}
-[info] i  hosting[sessionboard-77a56]: beginning deploy... 
-[info] i  hosting[sessionboard-77a56]: found 4 files in dist/virtual-board/browser 
-[debug] [2026-08-10T01:34:24.958Z] [hosting] uploading with 200 concurrency
-[debug] [2026-08-10T01:34:25.038Z] Checked if tokens are valid: true, expires at: 1786328779895
-[debug] [2026-08-10T01:34:25.038Z] Checked if tokens are valid: true, expires at: 1786328779895
-[debug] [2026-08-10T01:34:25.040Z] [hosting] hash cache [ZGlzdC92aXJ0dWFsLWJvYXJkL2Jyb3dzZXI] stored for 4 files
-[debug] [2026-08-10T01:34:25.040Z] [hosting][hash queue][FINAL] {"max":71,"min":0,"avg":22,"active":0,"complete":4,"success":4,"errored":0,"retried":0,"total":4,"elapsed":80}
-[debug] [2026-08-10T01:34:25.040Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/617930955204/sites/sessionboard-77a56/versions/0fd2bd6230c1935b:populateFiles [none]
-[debug] [2026-08-10T01:34:25.041Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/617930955204/sites/sessionboard-77a56/versions/0fd2bd6230c1935b:populateFiles {"files":{"/favicon.ico":"3554b87a6221ace6b3a1d3a782f480d9bbf6b58315586b47818d049b8257038f","/styles-5INURTSO.css":"f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec","/index.html":"583a3c69e20665f1f80e6f931d23ce17ef7b9d3c83c1663a2da8cfc3cc8f4679","/main-TLR5KV2K.js":"46b2187ae82049597b307afe4995c2f144191658e254a1f6b2cef3f07bd44888"}}
+[debug] [2026-08-10T01:45:53.175Z] Checked if tokens are valid: true, expires at: 1786328779895
+[debug] [2026-08-10T01:45:53.176Z] Checked if tokens are valid: true, expires at: 1786328779895
+[debug] [2026-08-10T01:45:53.176Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/sessionboard-77a56/sites/sessionboard-77a56 [none]

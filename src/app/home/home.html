@@ -27,18 +27,7 @@
               (keyup.enter)="createSession()"
             >
           </div>
-          <div class="file-upload-section" style="margin-top: 1rem; margin-bottom: 1rem;">
-            <label class="secondary-btn" style="cursor: pointer; display: block; text-align: center;">
-              Subir HTML (Opcional)
-              <input type="file" style="display: none" accept=".html" (change)="onFileSelected($event)">
-            </label>
-            @if (fileName()) {
-              <p style="font-size: 0.8rem; color: #555; text-align: center; margin-top: 0.5rem;">
-                {{ fileName() }}
-              </p>
-            }
-          </div>
-          <button class="primary-btn" style="width: 100%;" (click)="createSession()">
+          <button class="primary-btn" style="width: 100%; margin-top: 1rem;" (click)="createSession()">
             Crear Sesión
           </button>
         }

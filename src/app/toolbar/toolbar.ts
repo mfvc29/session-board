@@ -1,5 +1,5 @@
 import { Component, input, output } from '@angular/core';
-import { LucideAngularModule, PenTool, Eraser, Undo, Trash2, FileCode2, Image, MousePointer2, Power } from 'lucide-angular';
+import { LucideAngularModule, PenTool, Eraser, Undo, Trash2, Image, MousePointer2, Power } from 'lucide-angular';
 
 @Component({
   selector: 'app-toolbar',
@@ -12,7 +12,6 @@ export class Toolbar {
   role = input<string>('student');
   colorChange = output<string>();
   clear = output<void>();
-  uploadHtml = output<File>();
   uploadImage = output<File>();
   endSession = output<void>();
   toggleMode = output<'draw' | 'pointer'>();
@@ -24,7 +23,6 @@ export class Toolbar {
   readonly MousePointer2 = MousePointer2;
   readonly Undo = Undo;
   readonly Trash2 = Trash2;
-  readonly FileCode2 = FileCode2;
   readonly Image = Image;
   readonly Power = Power;
   
@@ -36,13 +34,6 @@ export class Toolbar {
 
   onClear() {
     this.clear.emit();
-  }
-
-  onHtmlSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      this.uploadHtml.emit(input.files[0]);
-    }
   }
 
   onImageSelected(event: Event) {

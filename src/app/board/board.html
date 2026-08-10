@@ -21,26 +21,28 @@
         <img [src]="img" class="extra-image" />
       }
     </div>
+
+    <!-- Canvas layer inside content-layer to inherit its full scroll height -->
+    <svg class="canvas-layer" 
+         (pointerdown)="handlePointerDown($event)"
+         (pointermove)="handlePointerMove($event)"
+         (pointerup)="handlePointerUp($event)"
+         (pointerleave)="handlePointerUp($event)"
+         [style.touch-action]="currentMode() === 'draw' ? 'none' : 'auto'"
+         [style.cursor]="currentMode() === 'draw' ? 'crosshair' : 'default'"
+         [style.pointer-events]="currentMode() === 'draw' ? 'auto' : 'none'">
+      
+      <!-- Render all other strokes -->
+      @for (stroke of allStrokes(); track stroke.id) {
+        <path [attr.d]="stroke.path" [attr.fill]="stroke.color"></path>
+      }
+      
+      <!-- Render current stroke -->
+      @if (currentPath()) {
+        <path [attr.d]="currentPath()" [attr.fill]="currentColor()"></path>
+      }
+    </svg>
   </div>
-  <svg class="canvas-layer" 
-       (pointerdown)="handlePointerDown($event)"
-       (pointermove)="handlePointerMove($event)"
-       (pointerup)="handlePointerUp($event)"
-       (pointerleave)="handlePointerUp($event)"
-       [style.touch-action]="currentMode() === 'draw' ? 'none' : 'auto'"
-       [style.cursor]="currentMode() === 'draw' ? 'crosshair' : 'default'"
-       [style.pointer-events]="currentMode() === 'draw' ? 'auto' : 'none'">
-    
-    <!-- Render all other strokes -->
-    @for (stroke of allStrokes(); track stroke.id) {
-      <path [attr.d]="stroke.path" [attr.fill]="stroke.color"></path>
-    }
-    
-    <!-- Render current stroke -->
-    @if (currentPath()) {
-      <path [attr.d]="currentPath()" [attr.fill]="currentColor()"></path>
-    }
-  </svg>
   
   <app-toolbar 
     [currentColor]="currentColor()"

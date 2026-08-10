@@ -63,8 +63,17 @@ export class Board implements OnInit, OnDestroy {
     const iframe = event.target as HTMLIFrameElement;
     try {
       if (iframe.contentWindow && iframe.contentWindow.document.body) {
-        const height = iframe.contentWindow.document.documentElement.scrollHeight;
-        iframe.style.height = height + 'px';
+        const resizeIframe = () => {
+          const height = iframe.contentWindow!.document.documentElement.scrollHeight;
+          iframe.style.height = height + 'px';
+        };
+        
+        // Initial resize
+        resizeIframe();
+        
+        // Setup observer for dynamic content/images loading
+        const observer = new ResizeObserver(() => resizeIframe());
+        observer.observe(iframe.contentWindow.document.body);
       }
     } catch (e) {
       console.warn('Cannot auto-resize iframe:', e);

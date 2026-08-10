@@ -10,13 +10,12 @@
 }
 
 .content-layer {
-  position: relative; /* relative instead of absolute so it pushes the container height */
+  position: relative;
   width: 100%;
   min-height: 100vh;
   padding: 0;
   box-sizing: border-box;
   z-index: 1;
-  pointer-events: none; /* Let clicks pass through to canvas by default, or maybe we want text selection? We need pointer-events on canvas instead if canvas is on top. */
 }
 
 .canvas-layer {
@@ -24,7 +23,7 @@
   top: 0;
   left: 0;
   right: 0;
-  bottom: 0;
+  height: 100%;
   z-index: 2;
   /* Touch action none is important for drawing */
   touch-action: none;

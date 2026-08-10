@@ -9,9 +9,19 @@
     <div class="actions-wrapper">
       <div class="action-section">
         <h3>Profesor</h3>
-        <button class="primary-btn" (click)="createSession()">
-          Crear Nueva Sesión
-        </button>
+        <div class="input-group">
+          <input 
+            type="text" 
+            placeholder="Crear Código (6 dígitos)" 
+            maxlength="6"
+            [ngModel]="createCode()"
+            (ngModelChange)="createCode.set($event)"
+            (keyup.enter)="createSession()"
+          >
+          <button class="primary-btn" (click)="createSession()">
+            Crear Sesión
+          </button>
+        </div>
       </div>
 
       <div class="divider">
@@ -23,8 +33,8 @@
         <div class="input-group">
           <input 
             type="text" 
-            placeholder="Código (Ej. 1234)" 
-            maxlength="4"
+            placeholder="Código (6 dígitos)" 
+            maxlength="6"
             [ngModel]="joinCode()"
             (ngModelChange)="joinCode.set($event)"
             (keyup.enter)="joinSession()"

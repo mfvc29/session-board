@@ -10,21 +10,23 @@ import { FormsModule } from '@angular/forms';
 })
 export class Home {
   joinCode = signal('');
+  createCode = signal('');
 
   constructor(private router: Router) {}
 
   createSession() {
-    // Generate a random 4 digit code
-    const code = Math.floor(1000 + Math.random() * 9000).toString();
-    // For now, just navigate to it. Later we save to Firebase.
-    this.router.navigate(['/board', code]);
+    if (this.createCode().length === 6) {
+      this.router.navigate(['/board', this.createCode()], { queryParams: { role: 'teacher' } });
+    } else {
+      alert('El código debe tener 6 dígitos.');
+    }
   }
 
   joinSession() {
-    if (this.joinCode().length === 4) {
-      this.router.navigate(['/board', this.joinCode()]);
+    if (this.joinCode().length === 6) {
+      this.router.navigate(['/board', this.joinCode()], { queryParams: { role: 'student' } });
     } else {
-      alert('El código debe tener 4 dígitos.');
+      alert('El código debe tener 6 dígitos.');
     }
   }
 }

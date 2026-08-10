@@ -9,6 +9,7 @@ import { LucideAngularModule, PenTool, Eraser, Undo, Trash2, FileCode2, Image, M
 })
 export class Toolbar {
   currentColor = input<string>('#ffffff');
+  role = input<string>('student');
   colorChange = output<string>();
   clear = output<void>();
   uploadHtml = output<File>();

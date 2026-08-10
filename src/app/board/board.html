@@ -1,4 +1,10 @@
 <div class="board-container">
+  <!-- Session Info Overlay -->
+  <div class="session-info glass-panel">
+    <div class="role-badge" [class.teacher]="role() === 'teacher'">{{ role() === 'teacher' ? 'Profesor' : 'Alumno' }}</div>
+    <div class="session-code">Código: <strong>{{ sessionId() }}</strong></div>
+  </div>
+
   <div class="content-layer">
     @if (iframeSrc()) {
       <iframe [src]="iframeSrc()" frameborder="0" width="100%" height="100%"></iframe>
@@ -37,6 +43,7 @@
   
   <app-toolbar 
     [currentColor]="currentColor()"
+    [role]="role()"
     (colorChange)="changeColor($event)"
     (clear)="clearBoard()"
     (uploadHtml)="handleHtmlUpload($event)"

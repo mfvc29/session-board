@@ -46,3 +46,44 @@
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
+
+.session-info {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  background: rgba(30, 30, 36, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-family: system-ui, -apple-system, sans-serif;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+
+  .role-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.1);
+    color: #a4b0be;
+
+    &.teacher {
+      background: rgba(30, 144, 255, 0.2);
+      color: #70a1ff;
+    }
+  }
+
+  .session-code {
+    font-size: 1.1rem;
+    strong {
+      color: #2ed573;
+      letter-spacing: 2px;
+    }
+  }
+}
+

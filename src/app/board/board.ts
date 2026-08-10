@@ -40,20 +40,29 @@ export class Board implements OnInit, OnDestroy {
   currentPoints = signal<number[][]>([]);
   allStrokes = signal<StrokeData[]>([]);
   images = signal<string[]>([]);
+  role = signal<string>('student');
 
   private sessionSub: any;
 
   ngOnInit() {
-    this.route.queryParams.subscribe(params => {
-      const session = params['session'];
-      if (session) {
-        this.sessionId.set(session);
-        this.joinSession(session);
+    this.route.paramMap.subscribe(params => {
+      const sessionId = params.get('id');
+      if (sessionId) {
+        this.sessionId.set(sessionId);
+        
+        // Only the teacher explicitly creates the session document
+        const role = this.route.snapshot.queryParamMap.get('role') || 'student';
+        this.role.set(role);
+
+        if (role === 'teacher') {
+          this.boardService.createSession(sessionId).then(() => {
+            this.joinSession(sessionId);
+          });
+        } else {
+          this.joinSession(sessionId);
+        }
       } else {
-        const newSession = this.boardService.generateSessionCode();
-        this.boardService.createSession(newSession).then(() => {
-          this.router.navigate([], { queryParams: { session: newSession } });
-        });
+        this.router.navigate(['/']);
       }
     });
   }

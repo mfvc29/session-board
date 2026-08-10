@@ -1,7 +1,7 @@
-import { ApplicationConfig, provideZonelessChangeDetection, inject } from '@angular/core';
+import { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideFirebaseApp, initializeApp, getApp } from '@angular/fire/app';
-import { provideFirestore, initializeFirestore } from '@angular/fire/firestore';
+import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
+import { provideFirestore, getFirestore } from '@angular/fire/firestore';
 import { provideAuth, getAuth } from '@angular/fire/auth';
 import { environment } from '../environments/environment';
 
@@ -13,8 +13,6 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideFirebaseApp(() => initializeApp(environment.firebase)),
     provideAuth(() => getAuth()),
-    provideFirestore(() => initializeFirestore(getApp(), {
-      experimentalAutoDetectLongPolling: true
-    }))
+    provideFirestore(() => getFirestore())
   ],
 };

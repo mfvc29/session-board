@@ -55,7 +55,8 @@ export class Board implements OnInit, OnDestroy {
         this.role.set(role);
 
         if (role === 'teacher') {
-          this.boardService.createSession(sessionId).then(() => {
+          const htmlContent = history.state.htmlContent;
+          this.boardService.createSession(sessionId, htmlContent).then(() => {
             this.joinSession(sessionId);
           });
         } else {
@@ -65,6 +66,18 @@ export class Board implements OnInit, OnDestroy {
         this.router.navigate(['/']);
       }
     });
+  }
+
+  onIframeLoad(event: Event) {
+    const iframe = event.target as HTMLIFrameElement;
+    try {
+      if (iframe.contentWindow && iframe.contentWindow.document.body) {
+        const height = iframe.contentWindow.document.documentElement.scrollHeight;
+        iframe.style.height = height + 'px';
+      }
+    } catch (e) {
+      console.warn('Cannot auto-resize iframe:', e);
+    }
   }
 
   ngOnDestroy() {

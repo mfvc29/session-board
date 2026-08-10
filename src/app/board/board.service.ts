@@ -27,9 +27,13 @@ export class BoardService {
   }
 
   // Crea una sesión inicial
-  async createSession(sessionId: string): Promise<void> {
+  async createSession(sessionId: string, htmlContent?: string): Promise<void> {
     const sessionRef = doc(this.firestore, `sessions/${sessionId}`);
-    await setDoc(sessionRef, { strokes: [] });
+    const data: any = { strokes: [] };
+    if (htmlContent) {
+      data.htmlContent = htmlContent;
+    }
+    await setDoc(sessionRef, data);
   }
 
   // Observa los cambios de la sesión en tiempo real

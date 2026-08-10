@@ -7,11 +7,11 @@
 
   <div class="content-layer">
     @if (iframeSrc()) {
-      <iframe [src]="iframeSrc()" frameborder="0" width="100%" height="100%"></iframe>
+      <iframe [src]="iframeSrc()" frameborder="0" width="100%" (load)="onIframeLoad($event)" style="min-height: 100vh; overflow: hidden; display: block;"></iframe>
     } @else if (images().length === 0) {
       <div class="empty-state">
         <h2>Área de Trabajo</h2>
-        <p>Sube un archivo HTML o una imagen para comenzar el ejercicio...</p>
+        <p>{{ role() === 'teacher' ? 'Sube un archivo HTML desde la barra de herramientas o crea una nueva sesión con un archivo...' : 'Esperando a que el profesor cargue los ejercicios...' }}</p>
       </div>
     }
 

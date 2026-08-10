@@ -1,0 +1,37 @@
+<div class="home-container">
+  <div class="glass-card">
+    <div class="logo">
+      <div class="logo-icon">✨</div>
+      <h1>Virtual Board</h1>
+    </div>
+    <p class="subtitle">La pizarra interactiva para tus clases particulares. Comparte ejercicios y resuelve en tiempo real.</p>
+    
+    <div class="actions-wrapper">
+      <div class="action-section">
+        <h3>Profesor</h3>
+        <button class="primary-btn" (click)="createSession()">
+          Crear Nueva Sesión
+        </button>
+      </div>
+
+      <div class="divider">
+        <span>O</span>
+      </div>
+
+      <div class="action-section">
+        <h3>Alumno</h3>
+        <div class="input-group">
+          <input 
+            type="text" 
+            placeholder="Código (Ej. 1234)" 
+            maxlength="4"
+            [ngModel]="joinCode()"
+            (ngModelChange)="joinCode.set($event)"
+            (keyup.enter)="joinSession()"
+          >
+          <button class="secondary-btn" (click)="joinSession()">Unirse</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

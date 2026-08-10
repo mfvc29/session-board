@@ -1,59 +1,75 @@
-# VirtualBoard
+# 📐 SessionBoard — Pizarra Virtual Colaborativa
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.3.
+Aplicación web para dar clases de matemáticas en tiempo real. El profesor carga los ejercicios en HTML, comparte un código de sesión de 4 dígitos con el alumno, y ambos pueden ver y dibujar en la misma pizarra sin necesidad de que el alumno inicie sesión.
 
-## Development server
+## ✨ Características
 
-To start a local development server, run:
+- **Sesiones instantáneas** — Código de 4 dígitos, sin registro para el alumno.
+- **Dibujo colaborativo en tiempo real** — Trazos sincronizados vía Firebase Firestore.
+- **Carga de ejercicios HTML** — Sube tus archivos HTML de problemas directamente.
+- **Imágenes adicionales** — Añade imágenes como material extra durante la sesión.
+- **Modo Interactuar / Dibujar** — Alterna entre interactuar con el HTML y dibujar encima.
+- **Finalizar sesión** — Borra todos los datos de Firebase al terminar la clase.
 
+## 🚀 Inicio Rápido
+
+### 1. Clonar y configurar
 ```bash
-ng serve
+git clone https://github.com/mfvc29/session-board.git
+cd session-board
+npm install
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
+### 2. Configurar Firebase
 ```bash
-ng generate component component-name
+cp src/environments/environment.example.ts src/environments/environment.ts
+```
+Edita `environment.ts` con las claves de tu proyecto Firebase.
+
+Necesitas habilitar **Cloud Firestore** en modo producción o prueba en la consola Firebase.
+
+### 3. Reglas de Firestore recomendadas
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /sessions/{sessionId} {
+      allow read, write: if true;
+    }
+  }
+}
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
+### 4. Ejecutar en local
 ```bash
-ng generate --help
+npm run start
 ```
 
-## Building
+Abre `http://localhost:4200` — La app genera automáticamente un código de sesión.
 
-To build the project run:
+## 🛠️ Stack Tecnológico
 
-```bash
-ng build
+- **Angular 20** (standalone components, signals)
+- **Firebase Firestore** (sync en tiempo real)
+- **perfect-freehand** (trazos de dibujo fluidos)
+- **lucide-angular** (iconos)
+
+## 📁 Estructura del Proyecto
+
+```
+src/
+├── app/
+│   ├── board/         # Componente principal de la pizarra
+│   │   ├── board.ts   # Lógica de dibujo y sesión
+│   │   ├── board.service.ts  # Comunicación con Firebase
+│   │   └── board.html
+│   └── toolbar/       # Barra de herramientas flotante
+└── environments/
+    └── environment.example.ts  # Plantilla de configuración
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## 🔒 Privacidad y Seguridad
 
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- Las **claves de Firebase** no se incluyen en el repositorio (`environment.ts` está en `.gitignore`).
+- Los archivos HTML e imágenes se almacenan **temporalmente** en Firestore hasta que el profesor finaliza la sesión.
+- Al hacer clic en **Finalizar Sesión**, todos los datos se eliminan permanentemente de Firebase.

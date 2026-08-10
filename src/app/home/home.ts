@@ -53,8 +53,8 @@ export class Home {
       const code = this.createCode();
       const htmlContent = this.boardService.processHtmlTemplate(this.selectedHtmlContent());
       
-      // Creamos la sesión en Firebase antes de navegar
-      await this.boardService.createSession(code, htmlContent);
+      // Creamos la sesión en Firebase sin esperar (fire-and-forget) para evitar bloqueos de red
+      this.boardService.createSession(code, htmlContent).catch(e => console.error('Error al crear sesión:', e));
       
       this.router.navigate(['/board', code], { 
         queryParams: { role: 'teacher' }

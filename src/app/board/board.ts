@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { BoardService, StrokeData } from './board.service';
 import { getStroke } from 'perfect-freehand';
 import { Toolbar } from '../toolbar/toolbar';
+import { Subscription } from 'rxjs';
 
 export function getSvgPathFromStroke(stroke: number[][]) {
   if (!stroke.length) return '';
@@ -32,33 +33,26 @@ export class Board implements OnInit, OnDestroy {
   private router = inject(Router);
 
   sessionId = signal<string>('');
-  
   iframeSrc = signal<SafeResourceUrl | null>(null);
   currentMode = signal<'draw' | 'pointer'>('draw');
-  
   currentColor = signal<string>('#ffffff');
   currentPoints = signal<number[][]>([]);
   allStrokes = signal<StrokeData[]>([]);
   images = signal<string[]>([]);
   role = signal<string>('student');
 
-  private sessionSub: any;
+  // Two separate subscriptions: one for metadata, one for strokes
+  private sessionSub: Subscription | null = null;
+  private strokesSub: Subscription | null = null;
 
   ngOnInit() {
     this.route.paramMap.subscribe(params => {
       const sessionId = params.get('id');
       if (sessionId) {
         this.sessionId.set(sessionId);
-        
-        // Only the teacher explicitly creates the session document
         const role = this.route.snapshot.queryParamMap.get('role') || 'student';
         this.role.set(role);
-
-        if (role === 'teacher') {
-          this.joinSession(sessionId);
-        } else {
-          this.joinSession(sessionId);
-        }
+        this.joinSession(sessionId);
       } else {
         this.router.navigate(['/']);
       }
@@ -78,28 +72,33 @@ export class Board implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    if (this.sessionSub) {
-      this.sessionSub.unsubscribe();
-    }
+    this.sessionSub?.unsubscribe();
+    this.strokesSub?.unsubscribe();
   }
 
   joinSession(sessionId: string) {
-    if (this.sessionSub) this.sessionSub.unsubscribe();
-    
+    this.sessionSub?.unsubscribe();
+    this.strokesSub?.unsubscribe();
+
+    // Subscribe to session metadata (HTML + images) — small doc, rarely changes
     this.sessionSub = this.boardService.getSession(sessionId).subscribe(data => {
       if (data) {
-        this.allStrokes.set(data.strokes || []);
-        this.images.set(data.images || []);
+        if (data.images) {
+          this.images.set(Array.isArray(data.images) ? data.images : [data.images]);
+        }
         if (data.htmlContent && !this.iframeSrc()) {
-          // Sync HTML if someone else uploaded it
           const blob = new Blob([data.htmlContent], { type: 'text/html' });
           const url = URL.createObjectURL(blob);
           this.iframeSrc.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
         }
       } else {
-        // If data is null/undefined, it means the session was ended (deleted)
         this.resetSession();
       }
+    });
+
+    // Subscribe to strokes subcollection — each stroke is a tiny separate doc
+    this.strokesSub = this.boardService.getStrokes(sessionId).subscribe(strokes => {
+      this.allStrokes.set(strokes || []);
     });
   }
 
@@ -108,7 +107,7 @@ export class Board implements OnInit, OnDestroy {
     this.images.set([]);
     this.iframeSrc.set(null);
   }
-  
+
   currentPath = computed(() => {
     const pts = this.currentPoints();
     if (pts.length === 0) return '';
@@ -146,9 +145,9 @@ export class Board implements OnInit, OnDestroy {
           color: this.currentColor(),
           path
         };
-        // Optimistic update
+        // Optimistic update locally
         this.allStrokes.update(s => [...s, newStroke]);
-        // Send to Firebase
+        // Send small individual stroke doc to Firebase
         if (this.sessionId()) {
           this.boardService.addStroke(this.sessionId(), newStroke);
         }
@@ -182,8 +181,6 @@ export class Board implements OnInit, OnDestroy {
         const blob = new Blob([processed], { type: 'text/html' });
         const url = URL.createObjectURL(blob);
         this.iframeSrc.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
-        
-        // Broadcast the HTML to others in the session
         if (this.sessionId()) {
           this.boardService.updateSessionHtml(this.sessionId(), processed);
         }
@@ -195,18 +192,14 @@ export class Board implements OnInit, OnDestroy {
   handleImageUpload(file: File) {
     const reader = new FileReader();
     reader.onload = (e) => {
-      const result = e.target?.result as string; // Base64 data URL
+      const result = e.target?.result as string;
       if (result) {
-        // Add to local state (optimistic)
         this.images.update(imgs => [...imgs, result]);
-        
-        // Broadcast to others
         if (this.sessionId()) {
           this.boardService.addImage(this.sessionId(), result);
         }
       }
     };
-    // readAsDataURL gives us a base64 string
     reader.readAsDataURL(file);
   }
 
@@ -214,7 +207,7 @@ export class Board implements OnInit, OnDestroy {
     if (this.sessionId()) {
       this.boardService.endSession(this.sessionId());
       this.resetSession();
-      // Optionally reset the session ID and create a new one, but let's just clear everything
+      this.router.navigate(['/']);
     }
   }
 }

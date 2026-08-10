@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, doc, docData, setDoc, updateDoc, arrayUnion, deleteDoc } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
+import { Firestore, doc, docData, setDoc, updateDoc, deleteDoc, collection, collectionData, addDoc, writeBatch, query, getDocs } from '@angular/fire/firestore';
+import { Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 export interface StrokeData {
   id: string;
@@ -11,7 +12,6 @@ export interface StrokeData {
 
 export interface SessionData {
   htmlContent?: string;
-  strokes: StrokeData[];
   images?: string[];
 }
 
@@ -28,16 +28,17 @@ export class BoardService {
       const problems = doc.querySelectorAll('.problem-item');
       
       problems.forEach(p => {
-        // Create the whiteboard space
         const boardSpace = doc.createElement('div');
         boardSpace.className = 'injected-board-space';
-        boardSpace.style.height = '500px';
-        boardSpace.style.border = '2px dashed #ccc';
-        boardSpace.style.marginTop = '20px';
-        boardSpace.style.marginBottom = '20px';
-        boardSpace.style.borderRadius = '8px';
-        boardSpace.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
-        
+        boardSpace.style.cssText = `
+          height: 500px;
+          border: 2px dashed #aaa;
+          margin-top: 20px;
+          margin-bottom: 20px;
+          border-radius: 8px;
+          background: rgba(200,200,255,0.05);
+          position: relative;
+        `;
         p.appendChild(boardSpace);
       });
       
@@ -48,61 +49,72 @@ export class BoardService {
     }
   }
 
-  // Genera un código de 4 dígitos
   generateSessionCode(): string {
-    return Math.floor(1000 + Math.random() * 9000).toString();
+    return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
-  // Crea una sesión inicial
+  // Crea la sesión - guarda SOLO el HTML y las imágenes (NO los trazos)
   async createSession(sessionId: string, htmlContent?: string): Promise<void> {
     const sessionRef = doc(this.firestore, `sessions/${sessionId}`);
-    const data: any = { strokes: [] };
+    const data: any = {};
     if (htmlContent) {
       data.htmlContent = htmlContent;
     }
     await setDoc(sessionRef, data);
   }
 
-  // Observa los cambios de la sesión en tiempo real
+  // Observa los metadatos de la sesión (HTML + imágenes)
   getSession(sessionId: string): Observable<SessionData> {
     const sessionRef = doc(this.firestore, `sessions/${sessionId}`);
-    return docData(sessionRef) as Observable<SessionData>;
+    return (docData(sessionRef) as Observable<SessionData>).pipe(
+      catchError(() => of({} as SessionData))
+    );
   }
 
-  // Agrega un trazo a la sesión
+  // Trazos como subcolección separada (mucho más eficiente)
+  getStrokes(sessionId: string): Observable<StrokeData[]> {
+    const strokesRef = collection(this.firestore, `sessions/${sessionId}/strokes`);
+    return collectionData(strokesRef, { idField: 'id' }) as Observable<StrokeData[]>;
+  }
+
   async addStroke(sessionId: string, stroke: StrokeData): Promise<void> {
-    const sessionRef = doc(this.firestore, `sessions/${sessionId}`);
-    await updateDoc(sessionRef, {
-      strokes: arrayUnion(stroke)
+    const strokesRef = collection(this.firestore, `sessions/${sessionId}/strokes`);
+    await addDoc(strokesRef, {
+      points: stroke.points,
+      color: stroke.color,
+      path: stroke.path,
     });
   }
 
-  // Limpia los trazos de la sesión
   async clearStrokes(sessionId: string): Promise<void> {
-    const sessionRef = doc(this.firestore, `sessions/${sessionId}`);
-    await updateDoc(sessionRef, {
-      strokes: []
-    });
+    const strokesRef = collection(this.firestore, `sessions/${sessionId}/strokes`);
+    const snapshot = await getDocs(query(strokesRef));
+    const batch = writeBatch(this.firestore);
+    snapshot.docs.forEach(d => batch.delete(d.ref));
+    await batch.commit();
   }
 
-  // Sincroniza el HTML subido
   async updateSessionHtml(sessionId: string, htmlContent: string): Promise<void> {
     const sessionRef = doc(this.firestore, `sessions/${sessionId}`);
-    await updateDoc(sessionRef, {
-      htmlContent
-    });
+    await updateDoc(sessionRef, { htmlContent });
   }
 
-  // Agrega una imagen extra (en base64)
   async addImage(sessionId: string, base64Image: string): Promise<void> {
     const sessionRef = doc(this.firestore, `sessions/${sessionId}`);
+    const current = (await getDocs(query(collection(this.firestore, `sessions/${sessionId}/strokes`)))).empty;
     await updateDoc(sessionRef, {
-      images: arrayUnion(base64Image)
+      images: base64Image
     });
   }
 
-  // Finaliza la sesión (borra el documento)
   async endSession(sessionId: string): Promise<void> {
+    // Borra subcolección de trazos primero
+    const strokesRef = collection(this.firestore, `sessions/${sessionId}/strokes`);
+    const snapshot = await getDocs(query(strokesRef));
+    const batch = writeBatch(this.firestore);
+    snapshot.docs.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+    // Borra el documento principal
     const sessionRef = doc(this.firestore, `sessions/${sessionId}`);
     await deleteDoc(sessionRef);
   }

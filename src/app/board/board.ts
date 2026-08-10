@@ -178,13 +178,14 @@ export class Board implements OnInit, OnDestroy {
     reader.onload = (e) => {
       const result = e.target?.result as string;
       if (result) {
-        const blob = new Blob([result], { type: 'text/html' });
+        const processed = this.boardService.processHtmlTemplate(result);
+        const blob = new Blob([processed], { type: 'text/html' });
         const url = URL.createObjectURL(blob);
         this.iframeSrc.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
         
         // Broadcast the HTML to others in the session
         if (this.sessionId()) {
-          this.boardService.updateSessionHtml(this.sessionId(), result);
+          this.boardService.updateSessionHtml(this.sessionId(), processed);
         }
       }
     };

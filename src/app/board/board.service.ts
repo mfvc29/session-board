@@ -6,7 +6,7 @@ export interface StrokeData {
   id: string;
   points: number[][];
   color: string;
-  path?: string;
+  path: string;
 }
 
 export interface SessionData {
@@ -20,6 +20,33 @@ export interface SessionData {
 })
 export class BoardService {
   private firestore = inject(Firestore);
+
+  processHtmlTemplate(html: string): string {
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const problems = doc.querySelectorAll('.problem-item');
+      
+      problems.forEach(p => {
+        // Create the whiteboard space
+        const boardSpace = doc.createElement('div');
+        boardSpace.className = 'injected-board-space';
+        boardSpace.style.height = '500px';
+        boardSpace.style.border = '2px dashed #ccc';
+        boardSpace.style.marginTop = '20px';
+        boardSpace.style.marginBottom = '20px';
+        boardSpace.style.borderRadius = '8px';
+        boardSpace.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
+        
+        p.appendChild(boardSpace);
+      });
+      
+      return doc.documentElement.outerHTML;
+    } catch (e) {
+      console.error('Error processing HTML template', e);
+      return html;
+    }
+  }
 
   // Genera un código de 4 dígitos
   generateSessionCode(): string {

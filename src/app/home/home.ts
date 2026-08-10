@@ -51,7 +51,7 @@ export class Home {
   async createSession() {
     if (this.createCode().length === 6) {
       const code = this.createCode();
-      const htmlContent = this.selectedHtmlContent();
+      const htmlContent = this.boardService.processHtmlTemplate(this.selectedHtmlContent());
       
       // Creamos la sesión en Firebase antes de navegar
       await this.boardService.createSession(code, htmlContent);

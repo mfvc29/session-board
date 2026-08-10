@@ -31,13 +31,16 @@ export class BoardService {
         const boardSpace = doc.createElement('div');
         boardSpace.className = 'injected-board-space';
         boardSpace.style.cssText = `
-          height: 500px;
-          border: 2px dashed #aaa;
+          height: 600px;
           margin-top: 20px;
-          margin-bottom: 20px;
-          border-radius: 8px;
-          background: rgba(200,200,255,0.05);
+          margin-bottom: 40px;
+          background-color: #ffffff;
+          background-image: linear-gradient(#e0e0e0 1px, transparent 1px), linear-gradient(90deg, #e0e0e0 1px, transparent 1px);
+          background-size: 20px 20px;
+          border: 1px solid #ccc;
+          border-radius: 4px;
           position: relative;
+          box-shadow: inset 0 0 10px rgba(0,0,0,0.02);
         `;
         p.appendChild(boardSpace);
       });

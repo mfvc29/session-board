@@ -3,16 +3,16 @@
   bottom: 2rem;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid #e0e0e0;
   border-radius: 100px;
   padding: 0.5rem 1rem;
   display: flex;
   align-items: center;
   gap: 1rem;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   z-index: 10;
 }
 
@@ -25,13 +25,13 @@
 .divider {
   width: 1px;
   height: 24px;
-  background: rgba(255, 255, 255, 0.2);
+  background: #e0e0e0;
 }
 
 .tool-btn {
   background: transparent;
   border: none;
-  color: #fff;
+  color: #333;
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -42,12 +42,12 @@
   transition: all 0.2s ease;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: #f0f0f0;
   }
 
   &.active {
-    background: rgba(255, 255, 255, 0.25);
-    color: #4facfe;
+    background: #e6f7ff;
+    color: #007bff;
   }
 }
 
@@ -64,8 +64,8 @@
   }
 
   &.active {
-    border-color: #fff;
+    border-color: #333;
     transform: scale(1.1);
-    box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
   }
 }

@@ -2,8 +2,8 @@
   position: relative;
   width: 100%;
   min-height: 100vh;
-  background-color: #1e1e24; /* Dark mode background */
-  color: #fff;
+  background-color: #ffffff; /* Minimalist white background */
+  color: #111111; /* Dark text */
   overflow-y: auto; /* Allow whole page scrolling */
   overflow-x: hidden;
   font-family: 'Inter', system-ui, sans-serif;
@@ -55,32 +55,33 @@
   gap: 1rem;
   padding: 0.75rem 1.5rem;
   border-radius: 12px;
-  background: rgba(30, 30, 36, 0.7);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #fff;
+  border: 1px solid #e0e0e0;
+  color: #111;
   font-family: system-ui, -apple-system, sans-serif;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
   .role-badge {
     padding: 0.25rem 0.75rem;
     border-radius: 20px;
     font-size: 0.875rem;
     font-weight: 600;
-    background: rgba(255, 255, 255, 0.1);
-    color: #a4b0be;
+    background: #f0f0f0;
+    color: #666;
 
     &.teacher {
-      background: rgba(30, 144, 255, 0.2);
-      color: #70a1ff;
+      background: #e6f7ff;
+      color: #007bff;
     }
   }
 
   .session-code {
     font-size: 1.1rem;
     strong {
-      color: #2ed573;
+      color: #111;
       letter-spacing: 2px;
+      font-weight: 700;
     }
   }
 }

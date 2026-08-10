@@ -1,57 +1,55 @@
 <div class="home-container">
-  <div class="glass-card">
+  <div class="main-card">
     <div class="logo">
-      <div class="logo-icon">✨</div>
       <h1>Virtual Board</h1>
     </div>
-    <p class="subtitle">La pizarra interactiva para tus clases particulares. Comparte ejercicios y resuelve en tiempo real.</p>
+    <p class="subtitle">La pizarra interactiva para tus clases particulares.</p>
     
     <div class="actions-wrapper">
       <div class="action-section">
         <h3>Profesor</h3>
         @if (!user()) {
           <div class="login-prompt">
-            <p style="font-size: 0.9rem; margin-bottom: 1rem; color: rgba(255,255,255,0.8);">Debes iniciar sesión con Google para poder crear una sesión.</p>
-            <button class="primary-btn" (click)="loginGoogle()">Iniciar Sesión</button>
+            <p style="font-size: 0.9rem; margin-bottom: 1rem; color: #555;">Inicia sesión con Google para crear una clase.</p>
+            <button class="secondary-btn" (click)="loginGoogle()">Iniciar Sesión</button>
           </div>
         } @else {
-          <div class="user-info" style="font-size: 0.9rem; margin-bottom: 1rem; color: #2ed573;">
-            Hola, {{ user().displayName }} <a style="color: white; text-decoration: underline; cursor: pointer; margin-left: 10px;" (click)="logout()">Salir</a>
+          <div class="user-info" style="font-size: 0.9rem; margin-bottom: 1rem; color: #333;">
+            {{ user().displayName }} <a style="color: #666; text-decoration: underline; cursor: pointer; margin-left: 10px;" (click)="logout()">Salir</a>
           </div>
           <div class="input-group">
-          <input 
-            type="text" 
-            placeholder="Crear Código (6 dígitos)" 
-            maxlength="6"
-            [ngModel]="createCode()"
-            (ngModelChange)="createCode.set($event)"
-            (keyup.enter)="createSession()"
-          >
-        </div>
-        <div class="file-upload-section" style="margin-top: 1rem; margin-bottom: 1rem;">
-          <label class="secondary-btn" style="cursor: pointer; display: block; text-align: center;">
-            Seleccionar archivo HTML (Opcional)
-            <input type="file" style="display: none" accept=".html" (change)="onFileSelected($event)">
-          </label>
-          @if (fileName()) {
-            <p style="font-size: 0.8rem; color: #2ed573; text-align: center; margin-top: 0.5rem;">
-              Archivo cargado: {{ fileName() }}
-            </p>
-          }
-        </div>
-        <button class="primary-btn" style="width: 100%;" (click)="createSession()">
-          Crear Sesión
-        </button>
+            <input 
+              type="text" 
+              placeholder="Código (6 dígitos)" 
+              maxlength="6"
+              [ngModel]="createCode()"
+              (ngModelChange)="createCode.set($event)"
+              (keyup.enter)="createSession()"
+            >
+          </div>
+          <div class="file-upload-section" style="margin-top: 1rem; margin-bottom: 1rem;">
+            <label class="secondary-btn" style="cursor: pointer; display: block; text-align: center;">
+              Subir HTML (Opcional)
+              <input type="file" style="display: none" accept=".html" (change)="onFileSelected($event)">
+            </label>
+            @if (fileName()) {
+              <p style="font-size: 0.8rem; color: #555; text-align: center; margin-top: 0.5rem;">
+                {{ fileName() }}
+              </p>
+            }
+          </div>
+          <button class="primary-btn" style="width: 100%;" (click)="createSession()">
+            Crear Sesión
+          </button>
         }
       </div>
 
-      <div class="divider">
-        <span>O</span>
-      </div>
+      <div class="divider"></div>
 
       <div class="action-section">
         <h3>Alumno</h3>
-        <div class="input-group">
+        <p style="font-size: 0.9rem; margin-bottom: 1rem; color: #555;">Únete a una clase existente.</p>
+        <div class="input-group" style="margin-top: auto;">
           <input 
             type="text" 
             placeholder="Código (6 dígitos)" 
@@ -60,7 +58,7 @@
             (ngModelChange)="joinCode.set($event)"
             (keyup.enter)="joinSession()"
           >
-          <button class="secondary-btn" (click)="joinSession()">Unirse</button>
+          <button class="secondary-btn" (click)="joinSession()" style="margin-top: 1rem;">Unirse</button>
         </div>
       </div>
     </div>

@@ -55,10 +55,7 @@ export class Board implements OnInit, OnDestroy {
         this.role.set(role);
 
         if (role === 'teacher') {
-          const htmlContent = history.state.htmlContent;
-          this.boardService.createSession(sessionId, htmlContent).then(() => {
-            this.joinSession(sessionId);
-          });
+          this.joinSession(sessionId);
         } else {
           this.joinSession(sessionId);
         }

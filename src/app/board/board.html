@@ -1,108 +1,149 @@
 <div class="board-container">
-  <!-- Session Info Overlay -->
-  <div class="session-info glass-panel">
-    <div class="role-badge" [class.teacher]="role() === 'teacher'">{{ role() === 'teacher' ? 'Mentor' : 'Alumno' }}</div>
-    <div class="session-code">Código: <strong>{{ sessionId() }}</strong></div>
-  </div>
 
-  <div class="content-layer">
-    @if (role() === 'teacher') {
-      <div class="teacher-controls" style="padding: 20px; max-width: 800px; margin: 0 auto;">
-        <div class="glass-panel" style="padding: 20px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
-          <h3>Añadir Nuevo Problema</h3>
-          <textarea #statementInput placeholder="Escribe el problema usando texto y $LaTeX$..." style="min-height: 100px; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-family: inherit; resize: vertical;"></textarea>
-          
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <input #optA placeholder="Opción A (Opcional)" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;" />
-            <input #optB placeholder="Opción B (Opcional)" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;" />
-            <input #optC placeholder="Opción C (Opcional)" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;" />
-            <input #optD placeholder="Opción D (Opcional)" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;" />
-          </div>
-          
-          <button class="primary-btn" (click)="addExercise(statementInput.value, optA.value, optB.value, optC.value, optD.value); statementInput.value=''; optA.value=''; optB.value=''; optC.value=''; optD.value=''">
-            Añadir Ejercicio
-          </button>
+  <!-- ===== STUDENT WAITING SCREEN ===== -->
+  @if (role() === 'student' && studentStatus() !== 'approved') {
+    <div class="waiting-room">
+      @if (studentStatus() === 'pending') {
+        <div class="waiting-card">
+          <div class="waiting-spinner"></div>
+          <h2>Esperando aprobación</h2>
+          <p>El Mentor está revisando tu solicitud. Si la aprobación no llega en unos segundos, entrarás automáticamente.</p>
+          <div class="waiting-code">⏳ En espera...</div>
         </div>
+      }
+      @if (studentStatus() === 'rejected') {
+        <div class="waiting-card rejected">
+          <div class="rejected-icon">✕</div>
+          <h2>Solicitud rechazada</h2>
+          <p>El Mentor no ha aceptado tu solicitud. Contacta con él para más información.</p>
+          <button class="btn-back" (click)="router.navigate(['/'])">Volver al inicio</button>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ===== MAIN BOARD (Teacher always, Student only when approved) ===== -->
+  @if (role() === 'teacher' || studentStatus() === 'approved') {
+
+    <!-- Session Info Overlay -->
+    <div class="session-info glass-panel">
+      <div class="role-badge" [class.teacher]="role() === 'teacher'">{{ role() === 'teacher' ? 'Mentor' : 'Alumno' }}</div>
+      <div class="session-code">Código: <strong>{{ sessionId() }}</strong></div>
+      @if (user()) {
+        <div class="user-details" style="margin-left: 1rem; border-left: 1px solid rgba(0,0,0,0.1); padding-left: 1rem; font-size: 0.85rem; line-height: 1.2;">
+          <strong style="display: block; color: #333;">{{ user().displayName }}</strong>
+          <span style="color: #666; font-size: 0.75rem;">{{ user().email }}</span>
+        </div>
+      }
+    </div>
+
+    <!-- Teacher: Student Requests Panel -->
+    @if (role() === 'teacher' && pendingStudents().length > 0) {
+      <div class="student-requests-panel">
+        <div class="requests-title">📋 Solicitudes de ingreso</div>
+        @for (student of pendingStudents(); track student.id) {
+          <div class="student-request-item">
+            <span class="student-name">👤 {{ student.name }}</span>
+            <div class="request-actions">
+              <button class="btn-approve" (click)="approveStudent(student.id)">✓ Aprobar</button>
+              <button class="btn-reject" (click)="rejectStudent(student.id)">✕</button>
+            </div>
+          </div>
+        }
       </div>
     }
 
-    <!-- Exercises List -->
-    <div class="exercises-container" style="max-width: 800px; margin: 0 auto; padding: 20px;">
-      @if (exercises().length === 0) {
-        <div class="empty-state">
-          <h2>Área de Trabajo</h2>
-          <p>{{ role() === 'teacher' ? 'Añade tu primer problema usando el formulario de arriba.' : 'Esperando a que el mentor cargue los ejercicios...' }}</p>
-        </div>
-      }
+    <!-- Main two-column layout -->
+    <div class="main-layout">
 
-      @for (ex of exercises(); track ex.id; let i = $index) {
-        <div class="exercise-item" style="margin-bottom: 60px;">
-          <h3 style="margin-bottom: 10px;">Problema {{ i + 1 }}</h3>
-          
-          <div class="statement" style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 15px;">
-            <app-latex [content]="ex.statement"></app-latex>
+      <!-- LEFT COLUMN: Form + exercises list -->
+      <div class="left-panel">
+
+        @if (role() === 'teacher') {
+          <div class="mentor-controls">
+            <h3 class="section-title">Añadir Nuevo Problema</h3>
+            <div class="input-group">
+              <textarea #statementInput placeholder="Escribe el problema usando texto y $LaTeX$..." class="modern-textarea"></textarea>
+            </div>
+
+            <div class="options-grid">
+              <input #optA placeholder="Opción A (Opcional)" class="modern-input" />
+              <input #optB placeholder="Opción B (Opcional)" class="modern-input" />
+              <input #optC placeholder="Opción C (Opcional)" class="modern-input" />
+              <input #optD placeholder="Opción D (Opcional)" class="modern-input" />
+            </div>
+
+            <button class="btn-add-exercise" (click)="addExercise(statementInput.value, optA.value, optB.value, optC.value, optD.value); statementInput.value=''; optA.value=''; optB.value=''; optC.value=''; optD.value=''">
+              Enviar Problema
+            </button>
           </div>
-          
-          @if (ex.options && (ex.options.a || ex.options.b || ex.options.c || ex.options.d)) {
-            <div class="options" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-              @if (ex.options.a) { <div><strong>A)</strong> <app-latex [content]="ex.options.a"></app-latex></div> }
-              @if (ex.options.b) { <div><strong>B)</strong> <app-latex [content]="ex.options.b"></app-latex></div> }
-              @if (ex.options.c) { <div><strong>C)</strong> <app-latex [content]="ex.options.c"></app-latex></div> }
-              @if (ex.options.d) { <div><strong>D)</strong> <app-latex [content]="ex.options.d"></app-latex></div> }
+        }
+
+        <!-- List of exercises -->
+        <div class="exercises-list">
+          @if (exercises().length === 0) {
+            <div class="waiting-state">
+              <div class="waiting-icon">⏳</div>
+              <p>{{ role() === 'teacher' ? 'Añade el primer problema usando el formulario de arriba.' : 'Esperando a que el Mentor cargue los problemas...' }}</p>
             </div>
           }
-          
-          <!-- Drawing Area for this exercise -->
-          <div class="board-space" style="
-            height: 400px;
-            width: 100%;
-            background-color: #ffffff;
-            background-image: linear-gradient(#e0e0e0 1px, transparent 1px), linear-gradient(90deg, #e0e0e0 1px, transparent 1px);
-            background-size: 20px 20px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.02);
-          "></div>
+          @for (ex of exercises(); track ex.id; let i = $index) {
+            <div class="exercise-card" [class.active]="activeExerciseId() === ex.id" (click)="selectExercise(ex.id)">
+              <div class="exercise-number">Problema {{ i + 1 }}</div>
+              <div class="exercise-statement">
+                <app-latex [content]="ex.statement"></app-latex>
+              </div>
+              @if (ex.options && (ex.options.a || ex.options.b || ex.options.c || ex.options.d)) {
+                <div class="options-list">
+                  @if (ex.options.a) { <div class="option-item"><span class="option-letter">A)</span> <app-latex [content]="ex.options.a"></app-latex></div> }
+                  @if (ex.options.b) { <div class="option-item"><span class="option-letter">B)</span> <app-latex [content]="ex.options.b"></app-latex></div> }
+                  @if (ex.options.c) { <div class="option-item"><span class="option-letter">C)</span> <app-latex [content]="ex.options.c"></app-latex></div> }
+                  @if (ex.options.d) { <div class="option-item"><span class="option-letter">D)</span> <app-latex [content]="ex.options.d"></app-latex></div> }
+                </div>
+              }
+            </div>
+          }
         </div>
-      }
+
+      </div>
+
+      <!-- RIGHT COLUMN: Whiteboard -->
+      <div class="right-panel">
+        <div class="board-space-container">
+          <div class="board-space-bg"></div>
+          <svg class="canvas-layer"
+               (pointerdown)="handlePointerDown($event, activeExerciseId())"
+               (pointermove)="handlePointerMove($event)"
+               (pointerup)="handlePointerUp($event)"
+               (pointerleave)="handlePointerUp($event)"
+               [style.touch-action]="currentMode() === 'draw' ? 'none' : 'auto'"
+               [style.cursor]="currentMode() === 'draw' ? 'crosshair' : 'default'"
+               [style.pointer-events]="currentMode() === 'draw' ? 'auto' : 'none'">
+
+            @for (stroke of allStrokes(); track stroke.id) {
+              @if (stroke.exerciseId === activeExerciseId()) {
+                <path [attr.d]="stroke.path" [attr.fill]="stroke.color"></path>
+              }
+            }
+
+            @if (currentPath()) {
+              <path [attr.d]="currentPath()" [attr.fill]="currentColor()"></path>
+            }
+          </svg>
+        </div>
+      </div>
+
     </div>
 
-    <!-- Render Extra Images -->
-    <div class="extra-images-container" style="max-width: 800px; margin: 0 auto;">
-      @for (img of images(); track $index) {
-        <img [src]="img" class="extra-image" style="max-width: 100%; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" />
-      }
-    </div>
+    <app-toolbar
+      [currentColor]="currentColor()"
+      [role]="role()"
+      (colorChange)="changeColor($event)"
+      (clear)="clearBoard()"
+      (uploadImage)="handleImageUpload($event)"
+      (endSession)="handleEndSession()"
+      (toggleMode)="handleModeToggle($event)">
+    </app-toolbar>
 
-    <!-- Canvas layer inside content-layer to inherit its full scroll height -->
-    <svg class="canvas-layer" 
-         (pointerdown)="handlePointerDown($event)"
-         (pointermove)="handlePointerMove($event)"
-         (pointerup)="handlePointerUp($event)"
-         (pointerleave)="handlePointerUp($event)"
-         [style.touch-action]="currentMode() === 'draw' ? 'none' : 'auto'"
-         [style.cursor]="currentMode() === 'draw' ? 'crosshair' : 'default'"
-         [style.pointer-events]="currentMode() === 'draw' ? 'auto' : 'none'">
-      
-      <!-- Render all other strokes -->
-      @for (stroke of allStrokes(); track stroke.id) {
-        <path [attr.d]="stroke.path" [attr.fill]="stroke.color"></path>
-      }
-      
-      <!-- Render current stroke -->
-      @if (currentPath()) {
-        <path [attr.d]="currentPath()" [attr.fill]="currentColor()"></path>
-      }
-    </svg>
-  </div>
-  
-  <app-toolbar 
-    [currentColor]="currentColor()"
-    [role]="role()"
-    (colorChange)="changeColor($event)"
-    (clear)="clearBoard()"
-    (uploadImage)="handleImageUpload($event)"
-    (endSession)="handleEndSession()"
-    (toggleMode)="handleModeToggle($event)">
-  </app-toolbar>
+  }
 </div>

@@ -26,7 +26,7 @@ export class Toolbar {
   readonly Image = Image;
   readonly Power = Power;
   
-  colors = ['#ffffff', '#ff4757', '#2ed573', '#1e90ff', '#ffa502'];
+  colors = ['#111111', '#ff4757', '#2ed573', '#1e90ff', '#ffa502'];
 
   selectColor(color: string) {
     this.colorChange.emit(color);

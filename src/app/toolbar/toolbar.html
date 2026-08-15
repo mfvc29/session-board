@@ -3,10 +3,10 @@
     <button class="tool-btn" [class.active]="currentMode === 'pointer'" title="Interactuar" (click)="setMode('pointer')">
       <lucide-angular [img]="MousePointer2" size="20" strokeWidth="2"></lucide-angular>
     </button>
-    <button class="tool-btn" [class.active]="currentMode === 'draw' && currentColor() !== '#1e1e24'" title="Lápiz" (click)="setMode('draw'); selectColor('#ffffff')">
+    <button class="tool-btn" [class.active]="currentMode === 'draw' && currentColor() !== '#f4f5f7'" title="Lápiz" (click)="setMode('draw'); selectColor('#111111')">
       <lucide-angular [img]="PenTool" size="20" strokeWidth="2"></lucide-angular>
     </button>
-    <button class="tool-btn" [class.active]="currentMode === 'draw' && currentColor() === '#1e1e24'" title="Borrador" (click)="setMode('draw'); selectColor('#1e1e24')">
+    <button class="tool-btn" [class.active]="currentMode === 'draw' && currentColor() === '#f4f5f7'" title="Borrador" (click)="setMode('draw'); selectColor('#f4f5f7')">
       <!-- We use the background color as an eraser for simplicity in MVP -->
       <lucide-angular [img]="Eraser" size="20" strokeWidth="2"></lucide-angular>
     </button>
@@ -33,12 +33,6 @@
     </button>
     
     @if (role() === 'teacher') {
-      <!-- Subir Imagen -->
-      <label class="tool-btn" title="Añadir Imagen" style="cursor: pointer;">
-        <lucide-angular [img]="Image" size="20" strokeWidth="2"></lucide-angular>
-        <input type="file" style="display: none" accept="image/*" (change)="onImageSelected($event)" />
-      </label>
-
       <div class="divider"></div>
 
       <button class="tool-btn" title="Finalizar Sesión" (click)="endSession.emit()">

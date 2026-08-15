@@ -1,24 +1,19 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, doc, docData, getDoc, setDoc, updateDoc, deleteDoc, collection, collectionData, addDoc, writeBatch, query, getDocs } from '@angular/fire/firestore';
+import { Firestore, doc, docData, setDoc, updateDoc, deleteDoc, collection, collectionData, addDoc, writeBatch, query, getDocs, serverTimestamp } from '@angular/fire/firestore';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 export interface StrokeData {
   id: string;
-  points: number[][];
   color: string;
   path: string;
+  exerciseId?: string;
 }
 
 export interface Exercise {
   id: string;
   statement: string;
-  options?: {
-    a: string;
-    b: string;
-    c: string;
-    d: string;
-  };
+  options?: { a: string; b: string; c: string; d: string; };
 }
 
 export interface SessionData {
@@ -26,45 +21,51 @@ export interface SessionData {
   images?: string[];
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+export interface StudentRequest {
+  id: string;
+  name: string;
+  status: 'pending' | 'approved' | 'rejected';
+  joinedAt?: any;
+}
+
+@Injectable({ providedIn: 'root' })
 export class BoardService {
   private firestore = inject(Firestore);
-
-  // Removed processHtmlTemplate
 
   generateSessionCode(): string {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
-  // Crea la sesión vacía
   async createSession(sessionId: string): Promise<void> {
     const sessionRef = doc(this.firestore, `sessions/${sessionId}`);
     await setDoc(sessionRef, { exercises: [], images: [] });
   }
 
-  // Observa los metadatos de la sesión (HTML + imágenes)
   getSession(sessionId: string): Observable<SessionData> {
     const sessionRef = doc(this.firestore, `sessions/${sessionId}`);
     return (docData(sessionRef) as Observable<SessionData>).pipe(
-      catchError(() => of({} as SessionData))
+      catchError(err => {
+        console.error('Error in getSession:', err);
+        return of({} as SessionData);
+      })
     );
   }
 
-  // Trazos como subcolección separada (mucho más eficiente)
   getStrokes(sessionId: string): Observable<StrokeData[]> {
     const strokesRef = collection(this.firestore, `sessions/${sessionId}/strokes`);
-    return collectionData(strokesRef, { idField: 'id' }) as Observable<StrokeData[]>;
+    return (collectionData(strokesRef, { idField: 'id' }) as Observable<StrokeData[]>).pipe(
+      catchError(err => {
+        console.error('Error in getStrokes:', err);
+        return of([]);
+      })
+    );
   }
 
   async addStroke(sessionId: string, stroke: StrokeData): Promise<void> {
     const strokesRef = collection(this.firestore, `sessions/${sessionId}/strokes`);
-    await addDoc(strokesRef, {
-      points: stroke.points,
-      color: stroke.color,
-      path: stroke.path,
-    });
+    const data: any = { color: stroke.color, path: stroke.path };
+    if (stroke.exerciseId) data.exerciseId = stroke.exerciseId;
+    await addDoc(strokesRef, data);
   }
 
   async clearStrokes(sessionId: string): Promise<void> {
@@ -75,33 +76,68 @@ export class BoardService {
     await batch.commit();
   }
 
-  async addExercise(sessionId: string, exercise: Exercise): Promise<void> {
+  async updateExercises(sessionId: string, exercises: Exercise[]): Promise<void> {
     const sessionRef = doc(this.firestore, `sessions/${sessionId}`);
-    const snapshot = await getDoc(sessionRef);
-    if (snapshot.exists()) {
-      const data = snapshot.data();
-      const exercises = data?.['exercises'] || [];
-      exercises.push(exercise);
-      await updateDoc(sessionRef, { exercises });
+    try {
+      await setDoc(sessionRef, { exercises }, { merge: true });
+    } catch (err) { 
+      console.error('Error in updateExercises:', err);
     }
   }
 
-  async addImage(sessionId: string, base64Image: string): Promise<void> {
-    const sessionRef = doc(this.firestore, `sessions/${sessionId}`);
-    const current = (await getDocs(query(collection(this.firestore, `sessions/${sessionId}/strokes`)))).empty;
-    await updateDoc(sessionRef, {
-      images: base64Image
+  // ===== STUDENT WAITING ROOM =====
+
+  /** Student requests to join — creates a pending entry */
+  async requestJoin(sessionId: string, studentId: string, studentName: string): Promise<void> {
+    const ref = doc(this.firestore, `sessions/${sessionId}/students/${studentId}`);
+    await setDoc(ref, {
+      id: studentId,
+      name: studentName,
+      status: 'pending',
+      joinedAt: serverTimestamp()
     });
   }
 
+  /** Teacher watches all student requests */
+  getStudentRequests(sessionId: string): Observable<StudentRequest[]> {
+    const ref = collection(this.firestore, `sessions/${sessionId}/students`);
+    return (collectionData(ref, { idField: 'id' }) as Observable<StudentRequest[]>).pipe(
+      catchError(err => {
+        console.error('Error in getStudentRequests:', err);
+        return of([]);
+      })
+    );
+  }
+
+  /** Teacher approves a student */
+  async approveStudent(sessionId: string, studentId: string): Promise<void> {
+    const ref = doc(this.firestore, `sessions/${sessionId}/students/${studentId}`);
+    await updateDoc(ref, { status: 'approved' });
+  }
+
+  /** Teacher rejects a student */
+  async rejectStudent(sessionId: string, studentId: string): Promise<void> {
+    const ref = doc(this.firestore, `sessions/${sessionId}/students/${studentId}`);
+    await updateDoc(ref, { status: 'rejected' });
+  }
+
+  /** Student watches their own request status */
+  watchMyStatus(sessionId: string, studentId: string): Observable<StudentRequest | null> {
+    const ref = doc(this.firestore, `sessions/${sessionId}/students/${studentId}`);
+    return (docData(ref) as Observable<StudentRequest>).pipe(
+      catchError(err => {
+        console.error('Error in watchMyStatus:', err);
+        return of(null);
+      })
+    );
+  }
+
   async endSession(sessionId: string): Promise<void> {
-    // Borra subcolección de trazos primero
     const strokesRef = collection(this.firestore, `sessions/${sessionId}/strokes`);
     const snapshot = await getDocs(query(strokesRef));
     const batch = writeBatch(this.firestore);
     snapshot.docs.forEach(d => batch.delete(d.ref));
     await batch.commit();
-    // Borra el documento principal
     const sessionRef = doc(this.firestore, `sessions/${sessionId}`);
     await deleteDoc(sessionRef);
   }

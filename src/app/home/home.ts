@@ -14,11 +14,16 @@ export class Home {
   joinCode = signal('');
   createCode = signal('');
   user = signal<any>(null);
+  selectedRole = signal<'mentor' | 'student' | null>(null);
   
   private auth = inject(Auth);
   private boardService = inject(BoardService);
 
   constructor(private router: Router) {
+    const savedRole = localStorage.getItem('virtual_board_role');
+    if (savedRole === 'mentor' || savedRole === 'student') {
+      this.selectedRole.set(savedRole);
+    }
     authState(this.auth).subscribe(u => this.user.set(u));
   }
 
@@ -27,8 +32,27 @@ export class Home {
     await signInWithPopup(this.auth, provider);
   }
 
+  async selectRole(role: 'mentor' | 'student') {
+    try {
+      if (!this.user()) {
+        await this.loginGoogle();
+      }
+      this.selectedRole.set(role);
+      localStorage.setItem('virtual_board_role', role);
+    } catch (e) {
+      console.error("Login cancelled or failed", e);
+    }
+  }
+
   async logout() {
     await this.auth.signOut();
+    this.selectedRole.set(null);
+    localStorage.removeItem('virtual_board_role');
+  }
+
+  clearRole() {
+    this.selectedRole.set(null);
+    localStorage.removeItem('virtual_board_role');
   }
 
   async createSession() {
@@ -48,7 +72,12 @@ export class Home {
 
   joinSession() {
     if (this.joinCode().length === 6) {
-      this.router.navigate(['/board', this.joinCode()], { queryParams: { role: 'student' } });
+      if (!this.user()) {
+        alert("Debes iniciar sesión para unirte.");
+        return;
+      }
+      const name = this.user().displayName || 'Alumno';
+      this.router.navigate(['/board', this.joinCode()], { queryParams: { role: 'student', name } });
     } else {
       alert('El código debe tener 6 dígitos.');
     }

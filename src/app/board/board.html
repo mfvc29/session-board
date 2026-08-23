@@ -116,19 +116,24 @@
                (pointermove)="handlePointerMove($event)"
                (pointerup)="handlePointerUp($event)"
                (pointerleave)="handlePointerUp($event)"
-               [style.touch-action]="currentMode() === 'draw' ? 'none' : 'auto'"
-               [style.cursor]="currentMode() === 'draw' ? 'crosshair' : 'default'"
-               [style.pointer-events]="currentMode() === 'draw' ? 'auto' : 'none'">
-
+               [style.touch-action]="'none'"
+               [style.cursor]="currentMode() === 'pointer' ? 'default' : 'crosshair'"
+               [style.pointer-events]="currentMode() !== 'pointer' ? 'auto' : 'none'">
+            <g>
             @for (stroke of allStrokes(); track stroke.id) {
               @if (stroke.exerciseId === activeExerciseId()) {
-                <path [attr.d]="stroke.path" [attr.fill]="stroke.color"></path>
+                <path [attr.d]="stroke.path" 
+                      [attr.fill]="stroke.color" 
+                      [style.pointer-events]="currentMode() === 'eraser' ? 'all' : 'none'"
+                      (pointerdown)="eraseStroke($event, stroke.id)"
+                      (pointerenter)="eraseStroke($event, stroke.id)"></path>
               }
             }
 
             @if (currentPath()) {
               <path [attr.d]="currentPath()" [attr.fill]="currentColor()"></path>
             }
+            </g>
           </svg>
         </div>
       </div>

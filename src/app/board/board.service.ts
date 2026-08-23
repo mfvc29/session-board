@@ -65,7 +65,23 @@ export class BoardService {
     const strokesRef = collection(this.firestore, `sessions/${sessionId}/strokes`);
     const data: any = { color: stroke.color, path: stroke.path };
     if (stroke.exerciseId) data.exerciseId = stroke.exerciseId;
-    await addDoc(strokesRef, data);
+    
+    if (stroke.id && !stroke.id.startsWith('temp-')) {
+      // If we provided an ID, use setDoc instead of addDoc to keep it
+      const docRef = doc(this.firestore, `sessions/${sessionId}/strokes/${stroke.id}`);
+      await setDoc(docRef, data);
+    } else {
+      await addDoc(strokesRef, data);
+    }
+  }
+
+  async deleteStroke(sessionId: string, strokeId: string): Promise<void> {
+    const ref = doc(this.firestore, `sessions/${sessionId}/strokes/${strokeId}`);
+    try {
+      await deleteDoc(ref);
+    } catch (err) {
+      console.error('Error deleting stroke:', err);
+    }
   }
 
   async clearStrokes(sessionId: string): Promise<void> {

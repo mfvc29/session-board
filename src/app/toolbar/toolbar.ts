@@ -14,7 +14,7 @@ export class Toolbar {
   clear = output<void>();
   uploadImage = output<File>();
   endSession = output<void>();
-  toggleMode = output<'draw' | 'pointer'>();
+  toggleMode = output<'draw' | 'pointer' | 'eraser'>();
 
   currentMode = 'draw';
 
@@ -43,7 +43,7 @@ export class Toolbar {
     }
   }
 
-  setMode(mode: 'draw' | 'pointer') {
+  setMode(mode: 'draw' | 'pointer' | 'eraser') {
     this.currentMode = mode;
     this.toggleMode.emit(mode);
   }

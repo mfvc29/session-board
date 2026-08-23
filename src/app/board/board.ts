@@ -34,7 +34,7 @@ export class Board implements OnInit, OnDestroy {
   router = inject(Router);
 
   sessionId = signal<string>('');
-  currentMode = signal<'draw' | 'pointer'>('draw');
+  currentMode = signal<'draw' | 'pointer' | 'eraser'>('draw');
   currentColor = signal<string>('#111111');
   currentPoints = signal<number[][]>([]);
   activeDrawingExerciseId = signal<string | null>(null);
@@ -234,7 +234,25 @@ export class Board implements OnInit, OnDestroy {
   }
 
   changeColor(color: string) { this.currentColor.set(color); }
-  handleModeToggle(mode: 'draw' | 'pointer') { this.currentMode.set(mode); }
+  handleModeToggle(mode: 'draw' | 'pointer' | 'eraser') {
+    this.currentMode.set(mode);
+  }
+
+  eraseStroke(event: PointerEvent, strokeId: string) {
+    if (this.currentMode() !== 'eraser') return;
+    
+    // Only erase if pointer button is pressed (or if it's a pointer down event)
+    if (event.buttons === 1 || event.type === 'pointerdown') {
+      // Optimistically remove locally
+      this.allStrokes.update(strokes => strokes.filter(s => s.id !== strokeId));
+      
+      // Remove from server
+      const sessionId = this.sessionId();
+      if (sessionId) {
+        this.boardService.deleteStroke(sessionId, strokeId).catch(() => {});
+      }
+    }
+  }
   selectExercise(id: string) { this.activeExerciseId.set(id); }
 
   clearBoard() {

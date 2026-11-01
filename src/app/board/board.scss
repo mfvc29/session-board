@@ -419,6 +419,13 @@
   z-index: 2;
   touch-action: none;
   cursor: crosshair;
+
+  .shape-hit {
+    fill: none;
+    stroke: transparent;
+    stroke-width: 16;
+    pointer-events: stroke;
+  }
 }
 
 /* Toolbar at bottom */

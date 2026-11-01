@@ -6,6 +6,7 @@ import { Toolbar } from '../toolbar/toolbar';
 import { LatexComponent } from '../components/latex/latex.component';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { Auth, authState } from '@angular/fire/auth';
+import { BoardMode, ShapeKind, SHAPE_STROKE_WIDTH, constrainEnd, shapePath } from './shapes';
 
 export function getSvgPathFromStroke(stroke: number[][]) {
   if (!stroke.length) return '';
@@ -34,9 +35,12 @@ export class Board implements OnInit, OnDestroy {
   router = inject(Router);
 
   sessionId = signal<string>('');
-  currentMode = signal<'draw' | 'pointer' | 'eraser'>('draw');
+  currentMode = signal<BoardMode>('draw');
   currentColor = signal<string>('#111111');
+  currentShape = signal<ShapeKind>('rect');
   currentPoints = signal<number[][]>([]);
+  shapeDraft = signal<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
+  readonly shapeStrokeWidth = SHAPE_STROKE_WIDTH;
   activeDrawingExerciseId = signal<string | null>(null);
   activeExerciseId = signal<string | null>(null);
   allStrokes = signal<StrokeData[]>([]);
@@ -195,46 +199,95 @@ export class Board implements OnInit, OnDestroy {
     return getSvgPathFromStroke(stroke);
   });
 
+  currentShapePath = computed(() => {
+    const d = this.shapeDraft();
+    return d ? shapePath(this.currentShape(), d.x0, d.y0, d.x1, d.y1) : '';
+  });
+
   handlePointerDown(e: PointerEvent, exerciseId: string | null = null) {
-    if (this.currentMode() !== 'draw') return;
+    const mode = this.currentMode();
+    if (mode !== 'draw' && mode !== 'shape') return;
     (e.target as Element).setPointerCapture(e.pointerId);
     this.activeDrawingExerciseId.set(exerciseId);
-    this.currentPoints.set([[e.offsetX, e.offsetY, e.pressure]]);
+    if (mode === 'shape') {
+      this.shapeDraft.set({ x0: e.offsetX, y0: e.offsetY, x1: e.offsetX, y1: e.offsetY });
+    } else {
+      this.currentPoints.set([[e.offsetX, e.offsetY, e.pressure]]);
+    }
   }
 
   handlePointerMove(e: PointerEvent) {
-    if (this.currentMode() !== 'draw') return;
+    const mode = this.currentMode();
+    if (mode !== 'draw' && mode !== 'shape') return;
     if (e.buttons !== 1) return;
+    if (mode === 'shape') {
+      const d = this.shapeDraft();
+      if (!d) return;
+      const [x1, y1] = e.shiftKey
+        ? constrainEnd(this.currentShape(), d.x0, d.y0, e.offsetX, e.offsetY)
+        : [e.offsetX, e.offsetY];
+      this.shapeDraft.set({ ...d, x1, y1 });
+      return;
+    }
     this.currentPoints.update(pts => [...pts, [e.offsetX, e.offsetY, e.pressure]]);
   }
 
   handlePointerUp(e: PointerEvent) {
-    if (this.currentMode() !== 'draw') return;
+    const mode = this.currentMode();
+    if (mode === 'shape') {
+      this.finishShape();
+      return;
+    }
+    if (mode !== 'draw') return;
     const pts = this.currentPoints();
     if (pts.length > 0) {
       const stroke = getStroke(pts, { size: 6 });
       if (stroke.length > 0) {
-        const path = getSvgPathFromStroke(stroke);
-        const exerciseId = this.activeDrawingExerciseId();
-        const newStroke: StrokeData = {
+        this.saveStroke({
           id: Date.now().toString(),
           color: this.currentColor(),
-          path
-        };
-        if (exerciseId) newStroke.exerciseId = exerciseId;
-
-        this.allStrokes.update(s => [...s, newStroke]);
-        if (this.sessionId()) {
-          this.boardService.addStroke(this.sessionId(), newStroke).catch(() => {});
-        }
+          path: getSvgPathFromStroke(stroke)
+        });
       }
     }
     this.currentPoints.set([]);
     this.activeDrawingExerciseId.set(null);
   }
 
+  private finishShape() {
+    const d = this.shapeDraft();
+    // Ignore clicks / tiny drags so they don't leave invisible shapes behind
+    if (d && Math.hypot(d.x1 - d.x0, d.y1 - d.y0) > 4) {
+      this.saveStroke({
+        id: Date.now().toString(),
+        color: this.currentColor(),
+        path: this.currentShapePath(),
+        type: 'shape',
+        width: SHAPE_STROKE_WIDTH
+      });
+    }
+    this.shapeDraft.set(null);
+    this.activeDrawingExerciseId.set(null);
+  }
+
+  private saveStroke(newStroke: StrokeData) {
+    const exerciseId = this.activeDrawingExerciseId();
+    if (exerciseId) newStroke.exerciseId = exerciseId;
+
+    this.allStrokes.update(s => [...s, newStroke]);
+    if (this.sessionId()) {
+      this.boardService.addStroke(this.sessionId(), newStroke).catch(() => {});
+    }
+  }
+
+  /** Strokes saved without an exercise must still show when no exercise is active. */
+  isVisible(stroke: StrokeData) {
+    return (stroke.exerciseId ?? null) === this.activeExerciseId();
+  }
+
   changeColor(color: string) { this.currentColor.set(color); }
-  handleModeToggle(mode: 'draw' | 'pointer' | 'eraser') {
+  changeShape(shape: ShapeKind) { this.currentShape.set(shape); }
+  handleModeToggle(mode: BoardMode) {
     this.currentMode.set(mode);
   }
 

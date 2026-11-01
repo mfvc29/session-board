@@ -8,6 +8,9 @@ export interface StrokeData {
   color: string;
   path: string;
   exerciseId?: string;
+  /** 'shape' paths are outlines (stroke); pen paths (default) are filled outlines. */
+  type?: 'pen' | 'shape';
+  width?: number;
 }
 
 export interface Exercise {
@@ -65,6 +68,8 @@ export class BoardService {
     const strokesRef = collection(this.firestore, `sessions/${sessionId}/strokes`);
     const data: any = { color: stroke.color, path: stroke.path };
     if (stroke.exerciseId) data.exerciseId = stroke.exerciseId;
+    if (stroke.type) data.type = stroke.type;
+    if (stroke.width) data.width = stroke.width;
     
     if (stroke.id && !stroke.id.startsWith('temp-')) {
       // If we provided an ID, use setDoc instead of addDoc to keep it

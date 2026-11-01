@@ -1,42 +1,106 @@
-<div class="glass-toolbar">
-  <div class="tools-group">
-    <button class="tool-btn" [class.active]="currentMode === 'pointer'" title="Interactuar" (click)="setMode('pointer')">
-      <lucide-angular [img]="MousePointer2" size="20" strokeWidth="2"></lucide-angular>
-    </button>
-    <button class="tool-btn" [class.active]="currentMode === 'draw'" title="Lápiz" (click)="setMode('draw')">
-      <lucide-angular [img]="PenTool" size="20" strokeWidth="2"></lucide-angular>
-    </button>
-    <button class="tool-btn" [class.active]="currentMode === 'eraser'" title="Borrador" (click)="setMode('eraser')">
-      <lucide-angular [img]="Eraser" size="20" strokeWidth="2"></lucide-angular>
-    </button>
-  </div>
-  
-  <div class="divider"></div>
-  
-  <div class="colors-group">
-    @for (color of colors; track color) {
-      <button 
-        class="color-btn" 
-        [class.active]="currentColor() === color"
-        [style.background-color]="color"
-        (click)="selectColor(color)">
-      </button>
-    }
-  </div>
-  
-  <div class="divider"></div>
-  
-  <div class="tools-group">
-    <button class="tool-btn" title="Limpiar Pizarra" (click)="onClear()">
-      <lucide-angular [img]="Trash2" size="20" strokeWidth="2"></lucide-angular>
-    </button>
-    
-    @if (role() === 'teacher') {
-      <div class="divider"></div>
+<div class="toolbar-shell">
+  @if (openPanel() === 'shapes') {
+    <div class="popover" role="menu" aria-label="Figuras geométricas">
+      <div class="popover-title">Figuras geométricas</div>
+      <div class="shapes-grid">
+        @for (shape of shapes; track shape.kind) {
+          <button
+            class="shape-option"
+            role="menuitem"
+            [class.active]="currentShape() === shape.kind"
+            [title]="shape.label"
+            (click)="selectShape(shape.kind)">
+            <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+              <path [attr.d]="shape.icon"></path>
+            </svg>
+            <span>{{ shape.label }}</span>
+          </button>
+        }
+      </div>
+      <div class="popover-hint">Mantén <kbd>Shift</kbd> para cuadrados, círculos y ángulos rectos.</div>
+    </div>
+  }
 
-      <button class="tool-btn" title="Finalizar Sesión" (click)="endSession.emit()">
-        <lucide-angular [img]="Power" size="20" strokeWidth="2" class="danger-icon"></lucide-angular>
+  @if (openPanel() === 'colors') {
+    <div class="popover" aria-label="Más colores">
+      <div class="popover-title">Más colores</div>
+      <div class="palette-grid">
+        @for (color of extraColors; track color) {
+          <button
+            class="color-btn"
+            [class.active]="currentColor() === color"
+            [class.light]="color === '#ffffff'"
+            [style.background-color]="color"
+            [title]="color"
+            (click)="pickFromPalette(color)">
+          </button>
+        }
+      </div>
+      <label class="custom-color">
+        <input
+          type="color"
+          [value]="currentColor()"
+          (input)="selectColor($any($event.target).value)">
+        <span>Color personalizado</span>
+        <code>{{ currentColor() }}</code>
+      </label>
+    </div>
+  }
+
+  <div class="glass-toolbar">
+    <div class="tools-group">
+      <button class="tool-btn" [class.active]="currentMode === 'pointer'" title="Interactuar" (click)="setMode('pointer')">
+        <lucide-angular [img]="MousePointer2" size="20" strokeWidth="2"></lucide-angular>
       </button>
-    }
+      <button class="tool-btn" [class.active]="currentMode === 'draw'" title="Lápiz" (click)="setMode('draw')">
+        <lucide-angular [img]="PenTool" size="20" strokeWidth="2"></lucide-angular>
+      </button>
+      <button class="tool-btn" [class.active]="currentMode === 'shape'" [class.open]="openPanel() === 'shapes'" title="Figuras geométricas" (click)="onShapeButton()">
+        <svg viewBox="0 0 24 24" width="20" height="20" class="shape-icon" aria-hidden="true">
+          <path [attr.d]="activeShapeIcon()"></path>
+        </svg>
+        <span class="caret" aria-hidden="true"></span>
+      </button>
+      <button class="tool-btn" [class.active]="currentMode === 'eraser'" title="Borrador" (click)="setMode('eraser')">
+        <lucide-angular [img]="Eraser" size="20" strokeWidth="2"></lucide-angular>
+      </button>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="colors-group">
+      @for (color of colors; track color) {
+        <button
+          class="color-btn"
+          [class.active]="currentColor() === color"
+          [style.background-color]="color"
+          (click)="selectColor(color)">
+        </button>
+      }
+      <button
+        class="color-btn more-colors"
+        [class.active]="isCustomColor()"
+        [class.open]="openPanel() === 'colors'"
+        title="Más colores"
+        (click)="togglePanel('colors')">
+        <span class="more-colors-dot" [style.background-color]="isCustomColor() ? currentColor() : '#ffffff'"></span>
+      </button>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="tools-group">
+      <button class="tool-btn" title="Limpiar Pizarra" (click)="onClear()">
+        <lucide-angular [img]="Trash2" size="20" strokeWidth="2"></lucide-angular>
+      </button>
+
+      @if (role() === 'teacher') {
+        <div class="divider"></div>
+
+        <button class="tool-btn" title="Finalizar Sesión" (click)="endSession.emit()">
+          <lucide-angular [img]="Power" size="20" strokeWidth="2" class="danger-icon"></lucide-angular>
+        </button>
+      }
+    </div>
   </div>
 </div>

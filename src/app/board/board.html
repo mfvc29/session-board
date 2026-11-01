@@ -27,6 +27,7 @@
 
     <!-- Session Info Overlay -->
     <div class="session-info glass-panel">
+      <img class="brand-logo" src="logo.svg" alt="Virtual Board" width="28" height="28">
       <div class="role-badge" [class.teacher]="role() === 'teacher'">{{ role() === 'teacher' ? 'Mentor' : 'Alumno' }}</div>
       <div class="session-code">Código: <strong>{{ sessionId() }}</strong></div>
       @if (user()) {
@@ -121,17 +122,44 @@
                [style.pointer-events]="currentMode() !== 'pointer' ? 'auto' : 'none'">
             <g>
             @for (stroke of allStrokes(); track stroke.id) {
-              @if (stroke.exerciseId === activeExerciseId()) {
-                <path [attr.d]="stroke.path" 
-                      [attr.fill]="stroke.color" 
-                      [style.pointer-events]="currentMode() === 'eraser' ? 'all' : 'none'"
-                      (pointerdown)="eraseStroke($event, stroke.id)"
-                      (pointerenter)="eraseStroke($event, stroke.id)"></path>
+              @if (isVisible(stroke)) {
+                @if (stroke.type === 'shape') {
+                  <path [attr.d]="stroke.path"
+                        fill="none"
+                        [attr.stroke]="stroke.color"
+                        [attr.stroke-width]="stroke.width || shapeStrokeWidth"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        style="pointer-events: none"></path>
+                  @if (currentMode() === 'eraser') {
+                    <!-- Wider invisible outline so thin shapes are easy to erase -->
+                    <path class="shape-hit"
+                          [attr.d]="stroke.path"
+                          (pointerdown)="eraseStroke($event, stroke.id)"
+                          (pointerenter)="eraseStroke($event, stroke.id)"></path>
+                  }
+                } @else {
+                  <path [attr.d]="stroke.path"
+                        [attr.fill]="stroke.color"
+                        [style.pointer-events]="currentMode() === 'eraser' ? 'all' : 'none'"
+                        (pointerdown)="eraseStroke($event, stroke.id)"
+                        (pointerenter)="eraseStroke($event, stroke.id)"></path>
+                }
               }
             }
 
             @if (currentPath()) {
               <path [attr.d]="currentPath()" [attr.fill]="currentColor()"></path>
+            }
+
+            @if (currentShapePath()) {
+              <path [attr.d]="currentShapePath()"
+                    fill="none"
+                    [attr.stroke]="currentColor()"
+                    [attr.stroke-width]="shapeStrokeWidth"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    style="pointer-events: none"></path>
             }
             </g>
           </svg>
@@ -142,8 +170,10 @@
 
     <app-toolbar
       [currentColor]="currentColor()"
+      [currentShape]="currentShape()"
       [role]="role()"
       (colorChange)="changeColor($event)"
+      (shapeChange)="changeShape($event)"
       (clear)="clearBoard()"
       (uploadImage)="handleImageUpload($event)"
       (endSession)="handleEndSession()"

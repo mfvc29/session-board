@@ -6,7 +6,8 @@ Aplicación web para dar clases de matemáticas en tiempo real. El profesor carg
 
 - **Sesiones instantáneas** — Código de 4 dígitos, sin registro para el alumno.
 - **Dibujo colaborativo en tiempo real** — Trazos sincronizados vía Firebase Firestore.
-- **Figuras geométricas** — Línea, flecha, rectángulo, círculo/elipse, triángulo, triángulo rectángulo, rombo, pentágono y hexágono. Con `Shift` se dibujan cuadrados, círculos y líneas a 15°.
+- **Figuras geométricas** — Planas: línea, flecha, rectángulo, círculo/elipse, triángulo, triángulo rectángulo, rombo, paralelogramo, trapecio, pentágono y hexágono. 3D (con aristas ocultas punteadas): cubo, paralelepípedo, prisma triangular, pirámide, cilindro, cono y esfera. Con `Shift` se dibujan cuadrados, círculos y líneas a 15°.
+- **Manito ✋** — Selecciona una figura para moverla, cambiarle el tamaño desde las esquinas, cambiarle el color o borrarla (botón rojo o tecla `Supr`). Los cambios se sincronizan con la otra persona.
 - **Más colores** — Paleta ampliada de 32 colores y selector de color personalizado.
 - **Carga de ejercicios HTML** — Sube tus archivos HTML de problemas directamente.
 - **Imágenes adicionales** — Añade imágenes como material extra durante la sesión.

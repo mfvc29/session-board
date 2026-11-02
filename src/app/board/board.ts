@@ -1,4 +1,4 @@
-import { Component, signal, computed, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, ElementRef, signal, computed, inject, viewChild, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BoardService, StrokeData, StudentRequest } from './board.service';
 import { getStroke } from 'perfect-freehand';
@@ -6,7 +6,12 @@ import { Toolbar } from '../toolbar/toolbar';
 import { LatexComponent } from '../components/latex/latex.component';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { Auth, authState } from '@angular/fire/auth';
-import { BoardMode, ShapeKind, SHAPE_STROKE_WIDTH, constrainEnd, shapePath } from './shapes';
+import { BoardMode, ShapeBox, ShapeKind, SHAPE_STROKE_WIDTH, constrainEnd, isLineShape, mustConstrain, shapeGeometry } from './shapes';
+
+type XKey = 'x0' | 'x1';
+type YKey = 'y0' | 'y1';
+/** A resize handle moves one x and one y coordinate of the shape box. */
+interface Handle { xKey: XKey; yKey: YKey; }
 
 export function getSvgPathFromStroke(stroke: number[][]) {
   if (!stroke.length) return '';
@@ -22,11 +27,22 @@ export function getSvgPathFromStroke(stroke: number[][]) {
   return d.join(' ');
 }
 
+/** Stores the shape box (rounded) and rebuilds its SVG paths from it. */
+function withGeometry(stroke: StrokeData, box: ShapeBox): StrokeData {
+  const round = (n: number) => Math.round(n * 10) / 10;
+  const rounded = { x0: round(box.x0), y0: round(box.y0), x1: round(box.x1), y1: round(box.y1) };
+  const { path, hiddenPath } = shapeGeometry(stroke.shape!, rounded);
+  return { ...stroke, ...rounded, path, hiddenPath };
+}
+
 @Component({
   selector: 'app-board',
   imports: [Toolbar, LatexComponent],
   templateUrl: './board.html',
   styleUrl: './board.scss',
+  host: {
+    '(document:keydown)': 'onKeyDown($event)',
+  },
 })
 export class Board implements OnInit, OnDestroy {
   private boardService = inject(BoardService);
@@ -39,8 +55,14 @@ export class Board implements OnInit, OnDestroy {
   currentColor = signal<string>('#111111');
   currentShape = signal<ShapeKind>('rect');
   currentPoints = signal<number[][]>([]);
-  shapeDraft = signal<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
+  shapeDraft = signal<ShapeBox | null>(null);
   readonly shapeStrokeWidth = SHAPE_STROKE_WIDTH;
+  selectedId = signal<string | null>(null);
+  private canvas = viewChild<ElementRef<SVGSVGElement>>('canvas');
+  /** Shape being moved (handle null) or resized with the hand tool. */
+  private edit: { id: string; handle: Handle | null; startX: number; startY: number; orig: ShapeBox; moved: boolean } | null = null;
+  /** Stroke ids present in the last server snapshot, to detect remote deletions. */
+  private serverIds = new Set<string>();
   activeDrawingExerciseId = signal<string | null>(null);
   activeExerciseId = signal<string | null>(null);
   allStrokes = signal<StrokeData[]>([]);
@@ -164,15 +186,25 @@ export class Board implements OnInit, OnDestroy {
       }
     });
 
-    // Subscribe to strokes: MERGE, never wipe
+    // Subscribe to strokes: merge with local state. Local-only strokes (never seen on
+    // the server, e.g. Firestore blocked) are kept; strokes the server had and no longer
+    // has were deleted by someone else; server versions win for edits, except for the
+    // shape this user is dragging right now.
+    this.serverIds = new Set();
     this.strokesSub = this.boardService.getStrokes(sessionId).subscribe(strokes => {
-      if (strokes && strokes.length > 0) {
-        this.allStrokes.update(local => {
-          const localIds = new Set(local.map(s => s.id));
-          const newFromServer = strokes.filter(s => !localIds.has(s.id));
-          return newFromServer.length > 0 ? [...local, ...newFromServer] : local;
-        });
-      }
+      const fromServer = new Map(strokes.map(s => [s.id, s]));
+      const removed = [...this.serverIds].filter(id => !fromServer.has(id));
+      this.serverIds = new Set(fromServer.keys());
+      const editingId = this.edit?.id;
+
+      this.allStrokes.update(local => {
+        const localIds = new Set(local.map(s => s.id));
+        const merged = local
+          .filter(s => !removed.includes(s.id))
+          .map(s => (s.id !== editingId && fromServer.get(s.id)) || s);
+        const added = strokes.filter(s => !localIds.has(s.id));
+        return [...merged, ...added];
+      });
     });
   }
 
@@ -199,13 +231,46 @@ export class Board implements OnInit, OnDestroy {
     return getSvgPathFromStroke(stroke);
   });
 
-  currentShapePath = computed(() => {
+  currentShapeGeometry = computed(() => {
     const d = this.shapeDraft();
-    return d ? shapePath(this.currentShape(), d.x0, d.y0, d.x1, d.y1) : '';
+    return d ? shapeGeometry(this.currentShape(), d) : null;
   });
+
+  /** Bounding box + handles of the shape selected with the hand tool. */
+  selection = computed(() => {
+    if (this.currentMode() !== 'hand') return null;
+    const stroke = this.allStrokes().find(s => s.id === this.selectedId());
+    if (!stroke || !this.isEditable(stroke) || !this.isVisible(stroke)) return null;
+    const { x0, y0, x1, y1 } = stroke as StrokeData & ShapeBox;
+    const left = Math.min(x0, x1);
+    const top = Math.min(y0, y1);
+    const corners: Handle[] = isLineShape(stroke.shape!)
+      ? [{ xKey: 'x0', yKey: 'y0' }, { xKey: 'x1', yKey: 'y1' }]
+      : [{ xKey: 'x0', yKey: 'y0' }, { xKey: 'x1', yKey: 'y0' }, { xKey: 'x0', yKey: 'y1' }, { xKey: 'x1', yKey: 'y1' }];
+    const handles = corners.map(h => {
+      const x = stroke[h.xKey]!;
+      const y = stroke[h.yKey]!;
+      return { ...h, x, y, cursor: (x === left) === (y === top) ? 'nwse-resize' : 'nesw-resize' };
+    });
+    const width = Math.abs(x1 - x0);
+    const height = Math.abs(y1 - y0);
+    // Delete button just outside the top-right corner, kept inside the board
+    const deleteX = left + width + 22;
+    const deleteY = Math.max(14, top - 22);
+    return { stroke, left, top, width, height, handles, deleteX, deleteY };
+  });
+
+  isEditable(stroke: StrokeData) {
+    return stroke.type === 'shape' && !!stroke.shape && stroke.x0 !== undefined;
+  }
 
   handlePointerDown(e: PointerEvent, exerciseId: string | null = null) {
     const mode = this.currentMode();
+    if (mode === 'hand') {
+      // Shapes and handles stop propagation, so this is a click on empty board
+      this.selectedId.set(null);
+      return;
+    }
     if (mode !== 'draw' && mode !== 'shape') return;
     (e.target as Element).setPointerCapture(e.pointerId);
     this.activeDrawingExerciseId.set(exerciseId);
@@ -218,13 +283,18 @@ export class Board implements OnInit, OnDestroy {
 
   handlePointerMove(e: PointerEvent) {
     const mode = this.currentMode();
-    if (mode !== 'draw' && mode !== 'shape') return;
     if (e.buttons !== 1) return;
+    if (mode === 'hand') {
+      this.dragEdit(e);
+      return;
+    }
+    if (mode !== 'draw' && mode !== 'shape') return;
     if (mode === 'shape') {
       const d = this.shapeDraft();
       if (!d) return;
-      const [x1, y1] = e.shiftKey
-        ? constrainEnd(this.currentShape(), d.x0, d.y0, e.offsetX, e.offsetY)
+      const kind = this.currentShape();
+      const [x1, y1] = mustConstrain(kind, e.shiftKey)
+        ? constrainEnd(kind, d.x0, d.y0, e.offsetX, e.offsetY)
         : [e.offsetX, e.offsetY];
       this.shapeDraft.set({ ...d, x1, y1 });
       return;
@@ -234,6 +304,10 @@ export class Board implements OnInit, OnDestroy {
 
   handlePointerUp(e: PointerEvent) {
     const mode = this.currentMode();
+    if (mode === 'hand') {
+      this.finishEdit();
+      return;
+    }
     if (mode === 'shape') {
       this.finishShape();
       return;
@@ -258,13 +332,14 @@ export class Board implements OnInit, OnDestroy {
     const d = this.shapeDraft();
     // Ignore clicks / tiny drags so they don't leave invisible shapes behind
     if (d && Math.hypot(d.x1 - d.x0, d.y1 - d.y0) > 4) {
-      this.saveStroke({
+      this.saveStroke(withGeometry({
         id: Date.now().toString(),
         color: this.currentColor(),
-        path: this.currentShapePath(),
+        path: '',
         type: 'shape',
-        width: SHAPE_STROKE_WIDTH
-      });
+        width: SHAPE_STROKE_WIDTH,
+        shape: this.currentShape()
+      }, d));
     }
     this.shapeDraft.set(null);
     this.activeDrawingExerciseId.set(null);
@@ -285,10 +360,103 @@ export class Board implements OnInit, OnDestroy {
     return (stroke.exerciseId ?? null) === this.activeExerciseId();
   }
 
-  changeColor(color: string) { this.currentColor.set(color); }
+  // ===== HAND TOOL: select, move, resize, recolor and delete shapes =====
+
+  /** Pointer position in board coordinates, whatever element got the event. */
+  private toBoard(e: PointerEvent): [number, number] {
+    const rect = this.canvas()!.nativeElement.getBoundingClientRect();
+    return [e.clientX - rect.left, e.clientY - rect.top];
+  }
+
+  onShapePointerDown(e: PointerEvent, stroke: StrokeData) {
+    if (this.currentMode() === 'eraser') {
+      this.eraseStroke(e, stroke.id);
+    } else {
+      this.startEdit(e, stroke, null);
+    }
+  }
+
+  startEdit(e: PointerEvent, stroke: StrokeData, handle: Handle | null) {
+    if (this.currentMode() !== 'hand' || !this.isEditable(stroke)) return;
+    e.stopPropagation();
+    this.canvas()!.nativeElement.setPointerCapture(e.pointerId);
+    const [x, y] = this.toBoard(e);
+    const { x0, y0, x1, y1 } = stroke as StrokeData & ShapeBox;
+    this.selectedId.set(stroke.id);
+    this.edit = { id: stroke.id, handle, startX: x, startY: y, orig: { x0, y0, x1, y1 }, moved: false };
+  }
+
+  private dragEdit(e: PointerEvent) {
+    const edit = this.edit;
+    const stroke = edit && this.allStrokes().find(s => s.id === edit.id);
+    if (!edit || !stroke) return;
+    const [x, y] = this.toBoard(e);
+    const o = edit.orig;
+    let box: ShapeBox;
+    if (!edit.handle) {
+      const dx = x - edit.startX;
+      const dy = y - edit.startY;
+      box = { x0: o.x0 + dx, y0: o.y0 + dy, x1: o.x1 + dx, y1: o.y1 + dy };
+    } else {
+      const { xKey, yKey } = edit.handle;
+      // The opposite corner stays fixed while resizing
+      const ox = xKey === 'x0' ? o.x1 : o.x0;
+      const oy = yKey === 'y0' ? o.y1 : o.y0;
+      const kind = stroke.shape!;
+      const [px, py] = mustConstrain(kind, e.shiftKey) ? constrainEnd(kind, ox, oy, x, y) : [x, y];
+      box = { ...o, [xKey]: px, [yKey]: py };
+    }
+    edit.moved = true;
+    this.allStrokes.update(list => list.map(s => (s.id === edit.id ? withGeometry(s, box) : s)));
+  }
+
+  private finishEdit() {
+    const edit = this.edit;
+    this.edit = null;
+    if (!edit?.moved) return;
+    const stroke = this.allStrokes().find(s => s.id === edit.id);
+    if (stroke) this.persistStroke(stroke);
+  }
+
+  private persistStroke(stroke: StrokeData) {
+    this.allStrokes.update(list => list.map(s => (s.id === stroke.id ? stroke : s)));
+    if (this.sessionId()) {
+      this.boardService.updateStroke(this.sessionId(), stroke).catch(() => {});
+    }
+  }
+
+  deleteSelected(e?: Event) {
+    e?.stopPropagation();
+    const id = this.selection()?.stroke.id;
+    if (!id) return;
+    this.allStrokes.update(list => list.filter(s => s.id !== id));
+    this.selectedId.set(null);
+    if (this.sessionId()) {
+      this.boardService.deleteStroke(this.sessionId(), id).catch(() => {});
+    }
+  }
+
+  onKeyDown(e: KeyboardEvent) {
+    if (!this.selection()) return;
+    if ((e.target as HTMLElement).closest?.('input, textarea, [contenteditable]')) return;
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      e.preventDefault();
+      this.deleteSelected();
+    } else if (e.key === 'Escape') {
+      this.selectedId.set(null);
+    }
+  }
+
+  changeColor(color: string) {
+    this.currentColor.set(color);
+    // With the hand tool, picking a color recolors the selected shape
+    const sel = this.selection();
+    if (sel) this.persistStroke({ ...sel.stroke, color });
+  }
   changeShape(shape: ShapeKind) { this.currentShape.set(shape); }
   handleModeToggle(mode: BoardMode) {
     this.currentMode.set(mode);
+    if (mode !== 'hand') this.selectedId.set(null);
   }
 
   eraseStroke(event: PointerEvent, strokeId: string) {

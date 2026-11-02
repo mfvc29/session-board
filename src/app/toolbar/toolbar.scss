@@ -68,6 +68,12 @@
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+
+  &.hidden-edge {
+    stroke-width: 1.5;
+    stroke-dasharray: 2 2.5;
+    opacity: 0.7;
+  }
 }
 
 .caret {
@@ -163,9 +169,21 @@
   }
 }
 
+.shapes-popover {
+  width: min(380px, calc(100vw - 32px));
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+
+  .shapes-grid + .popover-title {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #f0f0f0;
+  }
+}
+
 .shapes-grid {
   display: grid;
-  grid-template-columns: repeat(3, 92px);
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   gap: 6px;
 }
 

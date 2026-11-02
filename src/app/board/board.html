@@ -112,13 +112,13 @@
       <div class="right-panel">
         <div class="board-space-container">
           <div class="board-space-bg"></div>
-          <svg class="canvas-layer"
+          <svg class="canvas-layer" #canvas
                (pointerdown)="handlePointerDown($event, activeExerciseId())"
                (pointermove)="handlePointerMove($event)"
                (pointerup)="handlePointerUp($event)"
                (pointerleave)="handlePointerUp($event)"
                [style.touch-action]="'none'"
-               [style.cursor]="currentMode() === 'pointer' ? 'default' : 'crosshair'"
+               [style.cursor]="currentMode() === 'pointer' || currentMode() === 'hand' ? 'default' : 'crosshair'"
                [style.pointer-events]="currentMode() !== 'pointer' ? 'auto' : 'none'">
             <g>
             @for (stroke of allStrokes(); track stroke.id) {
@@ -131,11 +131,18 @@
                         stroke-linecap="round"
                         stroke-linejoin="round"
                         style="pointer-events: none"></path>
-                  @if (currentMode() === 'eraser') {
-                    <!-- Wider invisible outline so thin shapes are easy to erase -->
+                  @if (stroke.hiddenPath) {
+                    <path class="hidden-edge"
+                          [attr.d]="stroke.hiddenPath"
+                          [attr.stroke]="stroke.color"
+                          [attr.stroke-width]="(stroke.width || shapeStrokeWidth) * 0.7"></path>
+                  }
+                  @if (currentMode() === 'eraser' || currentMode() === 'hand') {
+                    <!-- Wider invisible outline so thin shapes are easy to grab or erase -->
                     <path class="shape-hit"
-                          [attr.d]="stroke.path"
-                          (pointerdown)="eraseStroke($event, stroke.id)"
+                          [class.movable]="currentMode() === 'hand'"
+                          [attr.d]="stroke.path + ' ' + (stroke.hiddenPath || '')"
+                          (pointerdown)="onShapePointerDown($event, stroke)"
                           (pointerenter)="eraseStroke($event, stroke.id)"></path>
                   }
                 } @else {
@@ -152,14 +159,41 @@
               <path [attr.d]="currentPath()" [attr.fill]="currentColor()"></path>
             }
 
-            @if (currentShapePath()) {
-              <path [attr.d]="currentShapePath()"
+            @if (currentShapeGeometry(); as preview) {
+              <path [attr.d]="preview.path"
                     fill="none"
                     [attr.stroke]="currentColor()"
                     [attr.stroke-width]="shapeStrokeWidth"
                     stroke-linecap="round"
                     stroke-linejoin="round"
                     style="pointer-events: none"></path>
+              @if (preview.hiddenPath) {
+                <path class="hidden-edge"
+                      [attr.d]="preview.hiddenPath"
+                      [attr.stroke]="currentColor()"
+                      [attr.stroke-width]="shapeStrokeWidth * 0.7"></path>
+              }
+            }
+
+            <!-- Hand tool: selected shape with move area, resize handles and delete button -->
+            @if (selection(); as sel) {
+              <rect class="selection-box"
+                    [attr.x]="sel.left - 8" [attr.y]="sel.top - 8"
+                    [attr.width]="sel.width + 16" [attr.height]="sel.height + 16"
+                    (pointerdown)="startEdit($event, sel.stroke, null)"></rect>
+              @for (h of sel.handles; track $index) {
+                <rect class="selection-handle"
+                      [attr.x]="h.x - 6" [attr.y]="h.y - 6" width="12" height="12" rx="3"
+                      [style.cursor]="h.cursor"
+                      (pointerdown)="startEdit($event, sel.stroke, h)"></rect>
+              }
+              <g class="selection-delete"
+                 [attr.transform]="'translate(' + sel.deleteX + ' ' + sel.deleteY + ')'"
+                 (pointerdown)="deleteSelected($event)">
+                <title>Eliminar figura</title>
+                <circle r="11"></circle>
+                <path d="M-4 -4 L4 4 M4 -4 L-4 4"></path>
+              </g>
             }
             </g>
           </svg>

@@ -1,23 +1,31 @@
 <div class="toolbar-shell">
   @if (openPanel() === 'shapes') {
-    <div class="popover" role="menu" aria-label="Figuras geométricas">
-      <div class="popover-title">Figuras geométricas</div>
-      <div class="shapes-grid">
-        @for (shape of shapes; track shape.kind) {
-          <button
-            class="shape-option"
-            role="menuitem"
-            [class.active]="currentShape() === shape.kind"
-            [title]="shape.label"
-            (click)="selectShape(shape.kind)">
-            <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
-              <path [attr.d]="shape.icon"></path>
-            </svg>
-            <span>{{ shape.label }}</span>
-          </button>
-        }
+    <div class="popover shapes-popover" role="menu" aria-label="Figuras geométricas">
+      @for (group of shapeGroups; track group.title) {
+        <div class="popover-title">{{ group.title }}</div>
+        <div class="shapes-grid">
+          @for (shape of group.shapes; track shape.kind) {
+            <button
+              class="shape-option"
+              role="menuitem"
+              [class.active]="currentShape() === shape.kind"
+              [title]="shape.label"
+              (click)="selectShape(shape.kind)">
+              <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+                <path [attr.d]="shape.icon.path"></path>
+                @if (shape.icon.hiddenPath) {
+                  <path class="hidden-edge" [attr.d]="shape.icon.hiddenPath"></path>
+                }
+              </svg>
+              <span>{{ shape.label }}</span>
+            </button>
+          }
+        </div>
+      }
+      <div class="popover-hint">
+        Mantén <kbd>Shift</kbd> para cuadrados, círculos y ángulos de 15°.
+        Con la manito puedes mover, cambiar tamaño, recolorear o borrar figuras.
       </div>
-      <div class="popover-hint">Mantén <kbd>Shift</kbd> para cuadrados, círculos y ángulos rectos.</div>
     </div>
   }
 
@@ -52,12 +60,18 @@
       <button class="tool-btn" [class.active]="currentMode === 'pointer'" title="Interactuar" (click)="setMode('pointer')">
         <lucide-angular [img]="MousePointer2" size="20" strokeWidth="2"></lucide-angular>
       </button>
+      <button class="tool-btn" [class.active]="currentMode === 'hand'" title="Manito: mover y modificar figuras" (click)="setMode('hand')">
+        <lucide-angular [img]="Hand" size="20" strokeWidth="2"></lucide-angular>
+      </button>
       <button class="tool-btn" [class.active]="currentMode === 'draw'" title="Lápiz" (click)="setMode('draw')">
         <lucide-angular [img]="PenTool" size="20" strokeWidth="2"></lucide-angular>
       </button>
       <button class="tool-btn" [class.active]="currentMode === 'shape'" [class.open]="openPanel() === 'shapes'" title="Figuras geométricas" (click)="onShapeButton()">
         <svg viewBox="0 0 24 24" width="20" height="20" class="shape-icon" aria-hidden="true">
-          <path [attr.d]="activeShapeIcon()"></path>
+          <path [attr.d]="activeShapeIcon().path"></path>
+          @if (activeShapeIcon().hiddenPath) {
+            <path class="hidden-edge" [attr.d]="activeShapeIcon().hiddenPath"></path>
+          }
         </svg>
         <span class="caret" aria-hidden="true"></span>
       </button>

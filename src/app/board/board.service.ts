@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { Firestore, doc, docData, setDoc, updateDoc, deleteDoc, collection, collectionData, addDoc, writeBatch, query, getDocs, serverTimestamp } from '@angular/fire/firestore';
-import { Observable, of } from 'rxjs';
+import { EMPTY, Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { ShapeKind } from './shapes';
 
 export interface StrokeData {
   id: string;
@@ -11,6 +12,14 @@ export interface StrokeData {
   /** 'shape' paths are outlines (stroke); pen paths (default) are filled outlines. */
   type?: 'pen' | 'shape';
   width?: number;
+  /** Editable shapes keep their kind and drag box so they can be moved/resized. */
+  shape?: ShapeKind;
+  x0?: number;
+  y0?: number;
+  x1?: number;
+  y1?: number;
+  /** Dashed back edges of 3D solids. */
+  hiddenPath?: string;
 }
 
 export interface Exercise {
@@ -58,18 +67,16 @@ export class BoardService {
     const strokesRef = collection(this.firestore, `sessions/${sessionId}/strokes`);
     return (collectionData(strokesRef, { idField: 'id' }) as Observable<StrokeData[]>).pipe(
       catchError(err => {
+        // EMPTY (not []) so an error never looks like "every stroke was deleted"
         console.error('Error in getStrokes:', err);
-        return of([]);
+        return EMPTY;
       })
     );
   }
 
   async addStroke(sessionId: string, stroke: StrokeData): Promise<void> {
     const strokesRef = collection(this.firestore, `sessions/${sessionId}/strokes`);
-    const data: any = { color: stroke.color, path: stroke.path };
-    if (stroke.exerciseId) data.exerciseId = stroke.exerciseId;
-    if (stroke.type) data.type = stroke.type;
-    if (stroke.width) data.width = stroke.width;
+    const data = this.toStrokeDoc(stroke);
     
     if (stroke.id && !stroke.id.startsWith('temp-')) {
       // If we provided an ID, use setDoc instead of addDoc to keep it
@@ -78,6 +85,17 @@ export class BoardService {
     } else {
       await addDoc(strokesRef, data);
     }
+  }
+
+  async updateStroke(sessionId: string, stroke: StrokeData): Promise<void> {
+    const ref = doc(this.firestore, `sessions/${sessionId}/strokes/${stroke.id}`);
+    await setDoc(ref, this.toStrokeDoc(stroke));
+  }
+
+  /** Firestore rejects undefined values, so drop them along with the id. */
+  private toStrokeDoc(stroke: StrokeData) {
+    const { id, ...fields } = stroke;
+    return Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined));
   }
 
   async deleteStroke(sessionId: string, strokeId: string): Promise<void> {

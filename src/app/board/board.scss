@@ -425,6 +425,34 @@
     stroke: transparent;
     stroke-width: 16;
     pointer-events: stroke;
+    &.movable { cursor: move; }
+  }
+
+  .hidden-edge {
+    fill: none;
+    stroke-dasharray: 6 6;
+    stroke-linecap: round;
+    pointer-events: none;
+  }
+
+  .selection-box {
+    fill: rgba(37, 99, 235, 0.04);
+    stroke: #2563eb;
+    stroke-width: 1.5;
+    stroke-dasharray: 5 4;
+    cursor: move;
+  }
+
+  .selection-handle {
+    fill: #fff;
+    stroke: #2563eb;
+    stroke-width: 2;
+  }
+
+  .selection-delete {
+    cursor: pointer;
+    circle { fill: #ef4444; }
+    path { stroke: #fff; stroke-width: 2; stroke-linecap: round; }
   }
 }
 

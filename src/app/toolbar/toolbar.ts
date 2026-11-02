@@ -1,6 +1,6 @@
 import { Component, ElementRef, computed, inject, input, output, signal } from '@angular/core';
-import { LucideAngularModule, PenTool, Eraser, Undo, Trash2, Image, MousePointer2, Power } from 'lucide-angular';
-import { BoardMode, SHAPES, ShapeKind } from '../board/shapes';
+import { LucideAngularModule, PenTool, Eraser, Undo, Trash2, Image, MousePointer2, Power, Hand } from 'lucide-angular';
+import { BoardMode, SHAPES, SHAPE_GROUPS, ShapeKind } from '../board/shapes';
 
 @Component({
   selector: 'app-toolbar',
@@ -35,6 +35,7 @@ export class Toolbar {
   readonly Trash2 = Trash2;
   readonly Image = Image;
   readonly Power = Power;
+  readonly Hand = Hand;
 
   colors = ['#111111', '#ff4757', '#2ed573', '#1e90ff', '#ffa502'];
 
@@ -46,7 +47,7 @@ export class Toolbar {
     '#fca5a5', '#fdba74', '#fde047', '#86efac', '#5eead4', '#93c5fd', '#c4b5fd', '#f9a8d4',
   ];
 
-  shapes = SHAPES;
+  shapeGroups = SHAPE_GROUPS;
   activeShapeIcon = computed(() => SHAPES.find(s => s.kind === this.currentShape())?.icon ?? SHAPES[0].icon);
   isCustomColor = computed(() => !this.colors.includes(this.currentColor()));
 
